@@ -1,74 +1,229 @@
 package proyecto.progra2.modelos;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import proyecto.progra2.conexion.ConexionOracle;
 
 public class GestionInventario {
-    private List<ProductoIndividual> listaProductos;
-    private List<MenuCompleto> listaMenus;
 
     public GestionInventario() {
-        this.listaProductos = new ArrayList<>();
-        this.listaMenus = new ArrayList<>();
-        cargarDatosPrueba();
+        // Se gestiona el inventario directamente con consultas a Oracle XE
     }
 
-    private void cargarDatosPrueba() {
-        ProductoIndividual p1 = new ProductoIndividual("P01", "Sándwich de Pollo", "SANDWICH", 25.00, 20);
-        ProductoIndividual p2 = new ProductoIndividual("P02", "Sándwich de Jamón", "SANDWICH", 22.00, 15);
-        ProductoIndividual p3 = new ProductoIndividual("P03", "Gaseosa 500ml", "BEBIDA", 8.00, 30);
-        ProductoIndividual p4 = new ProductoIndividual("P04", "Papas Fritas", "ACOMPANAMIENTO", 10.00, 25);
+    // 1. Agregar producto individual o combo a Oracle XE
+    public boolean agregarProducto(ProductoIndividual producto) {
+        String sql = "INSERT INTO PRODUCTOS (ID_PRODUCTO, NOMBRE, CATEGORIA, PRECIO, EXISTENCIA, ESTADO) " +
+                     "VALUES (SEQ_PRODUCTOS.NEXTVAL, ?, ?, ?, ?, 1)";
 
-        listaProductos.add(p1);
-        listaProductos.add(p2);
-        listaProductos.add(p3);
-        listaProductos.add(p4);
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, producto.getNombre().trim());
+                    stmt.setString(2, normalizarCategoria(producto.getCategoria()));
+                    stmt.setDouble(3, producto.getPrecio());
+                    stmt.setInt(4, producto.getExistencia());
 
-        MenuCompleto m1 = new MenuCompleto("M01", "Menú Completo de Pollo", 37.00, p1, p3, p4);
-        listaMenus.add(m1);
+                    int filas = stmt.executeUpdate();
+                    if (!conn.getAutoCommit()) conn.commit();
+                    return filas > 0;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al agregar producto en Oracle XE: " + e.getMessage());
+        }
+        return false;
     }
 
-    public void agregarProducto(ProductoIndividual producto) {
-        listaProductos.add(producto);
-    }
-
+    // 2. Editar producto en Oracle XE
     public boolean editarProducto(String codigoOriginal, String nuevoNombre, String nuevaCategoria, double nuevoPrecio) {
-        ProductoIndividual p = buscarProducto(codigoOriginal);
-        if (p != null) {
-            p.setNombre(nuevoNombre);
-            p.setCategoria(nuevaCategoria);
-            p.setPrecio(nuevoPrecio);
-            return true;
+        String sql = "UPDATE PRODUCTOS SET NOMBRE = ?, CATEGORIA = ?, PRECIO = ? WHERE ID_PRODUCTO = ?";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, nuevoNombre.trim());
+                    stmt.setString(2, normalizarCategoria(nuevaCategoria));
+                    stmt.setDouble(3, nuevoPrecio);
+                    stmt.setInt(4, Integer.parseInt(codigoOriginal.trim().replaceAll("[^0-9]", "")));
+
+                    int filas = stmt.executeUpdate();
+                    if (!conn.getAutoCommit()) conn.commit();
+                    return filas > 0;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al editar producto en Oracle XE: " + e.getMessage());
         }
         return false;
     }
 
+    // 3. Eliminar (desactivar) producto en Oracle XE
     public boolean eliminarProducto(String codigo) {
-        ProductoIndividual p = buscarProducto(codigo);
-        if (p != null) {
-            listaProductos.remove(p);
-            return true;
+        String sql = "UPDATE PRODUCTOS SET ESTADO = 0 WHERE ID_PRODUCTO = ?";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setInt(1, Integer.parseInt(codigo.trim().replaceAll("[^0-9]", "")));
+
+                    int filas = stmt.executeUpdate();
+                    if (!conn.getAutoCommit()) conn.commit();
+                    return filas > 0;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al eliminar producto en Oracle XE: " + e.getMessage());
         }
         return false;
     }
 
+    // 4. Abastecer o descontar existencia de un producto específico
     public boolean abastecerInventario(String codigo, int cantidadIngreso) {
-        if (cantidadIngreso <= 0) return false;
-        ProductoIndividual p = buscarProducto(codigo);
-        if (p != null) {
-            p.setExistencia(p.getExistencia() + cantidadIngreso);
-            return true;
+        String sql = "UPDATE PRODUCTOS SET EXISTENCIA = EXISTENCIA + ? WHERE ID_PRODUCTO = ?";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setInt(1, cantidadIngreso);
+                    stmt.setInt(2, Integer.parseInt(codigo.trim().replaceAll("[^0-9]", "")));
+
+                    int filas = stmt.executeUpdate();
+                    if (!conn.getAutoCommit()) conn.commit();
+                    return filas > 0;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al modificar existencia en Oracle XE: " + e.getMessage());
         }
         return false;
     }
 
+    // 5. Buscar producto por ID/Código
     public ProductoIndividual buscarProducto(String codigo) {
-        for (ProductoIndividual p : listaProductos) {
-            if (p.getCodigo().equalsIgnoreCase(codigo)) return p;
+        if (codigo == null || codigo.trim().isEmpty()) return null;
+
+        String sql = "SELECT ID_PRODUCTO, NOMBRE, CATEGORIA, PRECIO, EXISTENCIA FROM PRODUCTOS " +
+                     "WHERE ID_PRODUCTO = ? AND ESTADO = 1";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    int id = Integer.parseInt(codigo.trim().replaceAll("[^0-9]", ""));
+                    stmt.setInt(1, id);
+
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            return new ProductoIndividual(
+                                "P" + String.format("%02d", rs.getInt("ID_PRODUCTO")),
+                                rs.getString("NOMBRE"),
+                                rs.getString("CATEGORIA"),
+                                rs.getDouble("PRECIO"),
+                                rs.getInt("EXISTENCIA")
+                            );
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al buscar producto en Oracle XE: " + e.getMessage());
         }
         return null;
     }
 
-    public List<ProductoIndividual> getListaProductos() { return listaProductos; }
-    public List<MenuCompleto> getListaMenus() { return listaMenus; }
+    // 6. Obtener lista completa de productos individuales
+    public List<ProductoIndividual> getListaProductos() {
+        List<ProductoIndividual> lista = new ArrayList<>();
+        String sql = "SELECT ID_PRODUCTO, NOMBRE, CATEGORIA, PRECIO, EXISTENCIA FROM PRODUCTOS " +
+                     "WHERE CATEGORIA != 'Combo' AND ESTADO = 1 ORDER BY ID_PRODUCTO ASC";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        int id = rs.getInt("ID_PRODUCTO");
+                        String codigo = "P" + String.format("%02d", id);
+                        String nombre = rs.getString("NOMBRE");
+                        String categoria = rs.getString("CATEGORIA");
+                        double precio = rs.getDouble("PRECIO");
+                        int existencia = rs.getInt("EXISTENCIA");
+
+                        lista.add(new ProductoIndividual(codigo, nombre, categoria, precio, existencia));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al listar inventario desde Oracle XE: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    // 7. Obtener lista de Menús Completo/Combos
+    public List<MenuCompleto> getListaMenus() {
+        List<MenuCompleto> lista = new ArrayList<>();
+        String sql = "SELECT ID_PRODUCTO, NOMBRE, PRECIO FROM PRODUCTOS WHERE CATEGORIA = 'Combo' AND ESTADO = 1";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        int id = rs.getInt("ID_PRODUCTO");
+                        String codigo = "M" + String.format("%02d", id);
+                        String nombre = rs.getString("NOMBRE");
+                        double precio = rs.getDouble("PRECIO");
+
+                        // Se crea el combo usando referencias genéricas del inventario
+                        ProductoIndividual pSandwich = obtenerPrimerProductoPorCategoria("Sandwich");
+                        ProductoIndividual pBebida = obtenerPrimerProductoPorCategoria("Bebida");
+                        ProductoIndividual pPapas = obtenerPrimerProductoPorCategoria("Acompanamiento");
+
+                        lista.add(new MenuCompleto(codigo, nombre, precio, pSandwich, pBebida, pPapas));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al listar combos desde Oracle XE: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    private ProductoIndividual obtenerPrimerProductoPorCategoria(String cat) {
+        String sql = "SELECT ID_PRODUCTO, NOMBRE, CATEGORIA, PRECIO, EXISTENCIA FROM PRODUCTOS " +
+                     "WHERE CATEGORIA = ? AND ESTADO = 1 AND ROWNUM = 1";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, cat);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            return new ProductoIndividual(
+                                "P" + String.format("%02d", rs.getInt("ID_PRODUCTO")),
+                                rs.getString("NOMBRE"),
+                                rs.getString("CATEGORIA"),
+                                rs.getDouble("PRECIO"),
+                                rs.getInt("EXISTENCIA")
+                            );
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return new ProductoIndividual("P00", "Componente " + cat, cat, 0.0, 50);
+    }
+
+    private String normalizarCategoria(String cat) {
+        if (cat == null) return "Sandwich";
+        String c = cat.toUpperCase();
+        if (c.contains("BEBIDA")) return "Bebida";
+        if (c.contains("ACOMP") || c.contains("PAPA")) return "Acompanamiento";
+        if (c.contains("COMBO") || c.contains("MENU")) return "Combo";
+        return "Sandwich";
+    }
 }

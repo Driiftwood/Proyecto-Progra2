@@ -1,23 +1,29 @@
 package proyecto.progra2.vistas;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-import proyecto.progra2.modelos.*;
+import proyecto.progra2.conexion.ConexionOracle;
+import proyecto.progra2.modelos.Usuario;
 
 public class FrmReportes extends JFrame {
 
-    private JTabbedPane tabbedPane;
-    private JButton btnRegresar;
-
-    private GestionClientes gestionClientes;
-    private GestionInventario gestionInventario;
+    private JTable tablaReporte;
+    private DefaultTableModel modeloTabla;
+    private JLabel lblTotalVentas, lblTotalPedidos, lblTotalPuntosEmitidos;
+    private JButton btnReporteVentas, btnReporteMasVendidos, btnReporteFidelizacion, btnRegresar;
     private Usuario usuarioSesion;
 
-    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      
-    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  
+    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);
+    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);
 
     public FrmReportes() {
         this(null);
@@ -25,13 +31,11 @@ public class FrmReportes extends JFrame {
 
     public FrmReportes(Usuario usuario) {
         this.usuarioSesion = usuario;
-        gestionClientes = new GestionClientes();
-        gestionInventario = new GestionInventario();
 
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignored) {}
 
-        setTitle("Módulo de Reportes del Sistema");
-        setSize(980, 600);
+        setTitle("Módulo de Reportes de Auditoría y Fidelización");
+        setSize(1000, 680);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(COLOR_BG_LIGHT);
@@ -46,11 +50,11 @@ public class FrmReportes extends JFrame {
         panelTitulos.setOpaque(false);
         panelTitulos.setLayout(new BoxLayout(panelTitulos, BoxLayout.Y_AXIS));
 
-        JLabel lblTitulo = new JLabel("MÓDULO DE REPORTES Y ESTADÍSTICAS");
+        JLabel lblTitulo = new JLabel("MÓDULO DE REPORTES Y AUDITORÍA");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitulo.setForeground(Color.WHITE);
 
-        JLabel lblSub = new JLabel("Consultas consolidadas de ventas, inventario y programa de fidelización");
+        JLabel lblSub = new JLabel("Consultas consolidadas en tiempo real desde la base de datos Oracle XE");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSub.setForeground(new Color(200, 215, 235));
 
@@ -58,108 +62,248 @@ public class FrmReportes extends JFrame {
         panelTitulos.add(Box.createRigidArea(new Dimension(0, 4)));
         panelTitulos.add(lblSub);
 
-        btnRegresar = new JButton("Volver al Menú");
-        btnRegresar.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        btnRegresar.setBackground(new Color(70, 85, 105));
-        btnRegresar.setForeground(Color.WHITE);
-        btnRegresar.setFocusPainted(false);
-        btnRegresar.setOpaque(true);
-        btnRegresar.setContentAreaFilled(true);
-        btnRegresar.setBorderPainted(false);
-        btnRegresar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnRegresar = crearBoton("Volver al Menú", new Color(70, 85, 105), Color.WHITE);
         btnRegresar.setPreferredSize(new Dimension(140, 32));
-        btnRegresar.addActionListener(e -> {
-            this.dispose();
-            new FrmPrincipal(usuarioSesion).setVisible(true);
-        });
+        btnRegresar.addActionListener(e -> regresarMenu());
 
         panelHeader.add(panelTitulos, BorderLayout.WEST);
         panelHeader.add(btnRegresar, BorderLayout.EAST);
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Pestañas de Reportes ---
-        tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        // --- Panel Superior ---
+        JPanel panelControles = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
+        panelControles.setBackground(Color.WHITE);
+        panelControles.setBorder(new CompoundBorder(new LineBorder(new Color(210, 215, 220), 1), new EmptyBorder(8, 12, 8, 12)));
 
-        tabbedPane.addTab("1. Ventas por Período", crearReporteVentasPeriodo());
-        tabbedPane.addTab("2. Productos Más Vendidos", crearReporteMasVendidos());
-        tabbedPane.addTab("3. Bajo Inventario", crearReporteBajoInventario());
-        tabbedPane.addTab("4. Puntos por Cliente", crearReportePuntosClientes());
-        tabbedPane.addTab("5. Historial de Canjes", crearReporteCanjes());
-        tabbedPane.addTab("6. Ventas de Menús", crearReporteMenus());
+        btnReporteVentas = crearBoton("1. Historial de Ventas", COLOR_PRIMARY, Color.WHITE);
+        btnReporteVentas.setPreferredSize(new Dimension(170, 34));
+        btnReporteVentas.addActionListener(e -> cargarReporteVentas());
 
-        add(tabbedPane, BorderLayout.CENTER);
+        btnReporteMasVendidos = crearBoton("2. Productos Más Vendidos", new Color(40, 116, 166), Color.WHITE);
+        btnReporteMasVendidos.setPreferredSize(new Dimension(190, 34));
+        btnReporteMasVendidos.addActionListener(e -> cargarReporteMasVendidos());
+
+        btnReporteFidelizacion = crearBoton("3. Puntos y Fidelización", new Color(142, 68, 173), Color.WHITE);
+        btnReporteFidelizacion.setPreferredSize(new Dimension(180, 34));
+        btnReporteFidelizacion.addActionListener(e -> cargarReporteFidelizacion());
+
+        panelControles.add(btnReporteVentas);
+        panelControles.add(btnReporteMasVendidos);
+        panelControles.add(btnReporteFidelizacion);
+
+        // --- Panel Central: Tabla ---
+        modeloTabla = new DefaultTableModel() {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+
+        tablaReporte = new JTable(modeloTabla);
+        tablaReporte.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaReporte.setRowHeight(26);
+        tablaReporte.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+        JPanel panelCentro = new JPanel(new BorderLayout(5, 5));
+        panelCentro.setOpaque(false);
+        panelCentro.setBorder(new EmptyBorder(0, 15, 0, 15));
+        panelCentro.add(panelControles, BorderLayout.NORTH);
+        panelCentro.add(new JScrollPane(tablaReporte), BorderLayout.CENTER);
+
+        add(panelCentro, BorderLayout.CENTER);
+
+        // --- Panel Inferior ---
+        JPanel panelInferior = new JPanel(new GridLayout(1, 3, 15, 0));
+        panelInferior.setOpaque(false);
+        panelInferior.setBorder(new EmptyBorder(5, 15, 15, 15));
+
+        lblTotalVentas = crearTarjetaKPI("Total Ingresos", "Q0.00", new Color(34, 153, 84));
+        lblTotalPedidos = crearTarjetaKPI("Total Pedidos", "0 transacciones", COLOR_PRIMARY);
+        lblTotalPuntosEmitidos = crearTarjetaKPI("Puntos Acumulados", "0 pts emitidos", new Color(142, 68, 173));
+
+        panelInferior.add(lblTotalVentas);
+        panelInferior.add(lblTotalPedidos);
+        panelInferior.add(lblTotalPuntosEmitidos);
+
+        add(panelInferior, BorderLayout.SOUTH);
+
+        // Cargar por defecto ventas desde Oracle XE
+        cargarReporteVentas();
     }
 
-    private JPanel crearReporteVentasPeriodo() {
-        String[] col = {"Fecha", "Monto Total", "Pago Efectivo", "Pago Tarjeta"};
-        DefaultTableModel model = new DefaultTableModel(col, 0);
-        model.addRow(new Object[]{"09/10/2026", "Q104.00", "Q104.00", "Q0.00"});
-        model.addRow(new Object[]{"08/10/2026", "Q250.00", "Q100.00", "Q150.00"});
-        return crearPanelTabla(model);
+    private JLabel crearTarjetaKPI(String titulo, String valorInicial, Color colorTexto) {
+        JLabel lbl = new JLabel("<html><div style='text-align: center;'><b>" + titulo + "</b><br><span style='font-size:14px; color:" + String.format("#%06x", (colorTexto.getRGB() & 0xFFFFFF)) + ";'>" + valorInicial + "</span></div></html>");
+        lbl.setOpaque(true);
+        lbl.setBackground(Color.WHITE);
+        lbl.setHorizontalAlignment(SwingConstants.CENTER);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl.setBorder(new CompoundBorder(new LineBorder(new Color(210, 215, 220), 1), new EmptyBorder(10, 10, 10, 10)));
+        return lbl;
     }
 
-    private JPanel crearReporteMasVendidos() {
-        String[] col = {"Código", "Producto", "Categoría", "Unidades Vendidas"};
-        DefaultTableModel model = new DefaultTableModel(col, 0);
-        model.addRow(new Object[]{"P01", "Sándwich de Pollo", "SANDWICH", "24"});
-        model.addRow(new Object[]{"M01", "Menú Completo de Pollo", "MENÚ", "18"});
-        model.addRow(new Object[]{"P03", "Gaseosa 500ml", "BEBIDA", "15"});
-        return crearPanelTabla(model);
+    private JButton crearBoton(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
-    private JPanel crearReporteBajoInventario() {
-        String[] col = {"Código", "Producto", "Categoría", "Existencia Actual", "Estado"};
-        DefaultTableModel model = new DefaultTableModel(col, 0);
+    // --- REPORTE 1: HISTORIAL DE VENTAS ---
+    private void cargarReporteVentas() {
+        modeloTabla.setRowCount(0);
+        String[] columnas = {"ID Pedido", "NIT Cliente", "Nombre Cliente", "Fecha / Hora", "Método Pago", "Total (Q)", "Puntos Ganados"};
+        modeloTabla.setDataVector(null, columnas);
 
-        for (ProductoIndividual p : gestionInventario.getListaProductos()) {
-            if (p.getExistencia() <= 5) {
-                model.addRow(new Object[]{p.getCodigo(), p.getNombre(), p.getCategoria(), p.getExistencia(), p.getExistencia() == 0 ? "AGOTADO" : "BAJO STOCK"});
+        String sql = "SELECT p.ID_PEDIDO, p.NIT_CLIENTE, NVL(c.NOMBRE, 'Consumidor Final') AS CLIENTE, " +
+                     "TO_CHAR(p.FECHA, 'DD/MM/YYYY HH24:MI') AS FECHA_FMT, p.METODO_PAGO, p.TOTAL, p.PUNTOS_GANADOS " +
+                     "FROM PEDIDOS p LEFT JOIN CLIENTES c ON p.NIT_CLIENTE = c.NIT ORDER BY p.ID_PEDIDO DESC";
+
+        double sumaTotal = 0;
+        int contadorPedidos = 0;
+        int sumaPuntos = 0;
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        int id = rs.getInt("ID_PEDIDO");
+                        String nit = rs.getString("NIT_CLIENTE");
+                        String cliente = rs.getString("CLIENTE");
+                        String fecha = rs.getString("FECHA_FMT");
+                        String pago = rs.getString("METODO_PAGO");
+                        double total = rs.getDouble("TOTAL");
+                        int puntos = rs.getInt("PUNTOS_GANADOS");
+
+                        sumaTotal += total;
+                        sumaPuntos += puntos;
+                        contadorPedidos++;
+
+                        modeloTabla.addRow(new Object[]{
+                            "PED-" + String.format("%04d", id),
+                            nit,
+                            cliente,
+                            fecha != null ? fecha : "N/A",
+                            pago,
+                            String.format("Q%.2f", total),
+                            "+" + puntos + " pts"
+                        });
+                    }
+                }
             }
-        }
-        if (model.getRowCount() == 0) {
-            model.addRow(new Object[]{"P02", "Sándwich de Jamón (Ejemplo)", "SANDWICH", "4", "BAJO STOCK"});
-        }
-
-        return crearPanelTabla(model);
-    }
-
-    private JPanel crearReportePuntosClientes() {
-        String[] col = {"NIT / DPI", "Nombre del Cliente", "Puntos Acumulados", "Estado"};
-        DefaultTableModel model = new DefaultTableModel(col, 0);
-
-        for (Cliente c : gestionClientes.getListaClientes()) {
-            model.addRow(new Object[]{c.getNit(), c.getNombre(), c.getPuntos() + " pts", c.isActivo() ? "Activo" : "Inactivo"});
+        } catch (SQLException e) {
+            System.err.println("Error al cargar reporte de ventas desde Oracle XE: " + e.getMessage());
         }
 
-        return crearPanelTabla(model);
+        actualizarKPI("Q" + String.format("%.2f", sumaTotal), contadorPedidos + " pedidos", sumaPuntos + " pts emitidos");
     }
 
-    private JPanel crearReporteCanjes() {
-        String[] col = {"Cliente", "Fecha", "Recompensa Canjeada", "Puntos Utilizados"};
-        DefaultTableModel model = new DefaultTableModel(col, 0);
-        model.addRow(new Object[]{"Juan Pérez", "09/10/2026", "Bebida Gratuita", "-10 pts"});
-        model.addRow(new Object[]{"María López", "07/10/2026", "Sándwich Individual", "-30 pts"});
-        return crearPanelTabla(model);
+    // --- REPORTE 2: PRODUCTOS MÁS VENDIDOS ---
+    private void cargarReporteMasVendidos() {
+        modeloTabla.setRowCount(0);
+        String[] columnas = {"ID Producto", "Nombre Producto", "Categoría", "Unidades Vendidas", "Total Recaudado (Q)"};
+        modeloTabla.setDataVector(null, columnas);
+
+        String sql = "SELECT p.ID_PRODUCTO, p.NOMBRE, p.CATEGORIA, SUM(d.CANTIDAD) AS TOTAL_UNIDADES, SUM(d.SUBTOTAL) AS TOTAL_VENTA " +
+                     "FROM DETALLE_PEDIDOS d JOIN PRODUCTOS p ON d.ID_PRODUCTO = p.ID_PRODUCTO " +
+                     "GROUP BY p.ID_PRODUCTO, p.NOMBRE, p.CATEGORIA ORDER BY TOTAL_UNIDADES DESC";
+
+        double sumaTotal = 0;
+        int totalUnidades = 0;
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        int id = rs.getInt("ID_PRODUCTO");
+                        String nombre = rs.getString("NOMBRE");
+                        String cat = rs.getString("CATEGORIA");
+                        int unidades = rs.getInt("TOTAL_UNIDADES");
+                        double venta = rs.getDouble("TOTAL_VENTA");
+
+                        sumaTotal += venta;
+                        totalUnidades += unidades;
+
+                        modeloTabla.addRow(new Object[]{
+                            "PROD-" + String.format("%03d", id),
+                            nombre,
+                            cat,
+                            unidades + " uds",
+                            String.format("Q%.2f", venta)
+                        });
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al cargar reporte de productos desde Oracle XE: " + e.getMessage());
+        }
+
+        actualizarKPI("Q" + String.format("%.2f", sumaTotal), totalUnidades + " unidades vendidas", "Categorías en Oracle XE");
     }
 
-    private JPanel crearReporteMenus() {
-        String[] col = {"Código Menú", "Nombre del Menú", "Cantidad Vendida", "Importe Generado"};
-        DefaultTableModel model = new DefaultTableModel(col, 0);
-        model.addRow(new Object[]{"M01", "Menú Completo de Pollo", "12", "Q444.00"});
-        return crearPanelTabla(model);
+    // --- REPORTE 3: FIDELIZACIÓN (LECTURA FRESCA Y REAL DE PUNTOS) ---
+    private void cargarReporteFidelizacion() {
+        modeloTabla.setRowCount(0);
+        String[] columnas = {"NIT / DPI", "Nombre Cliente", "Puntos Acumulados", "Estado", "Nivel Fidelidad"};
+        modeloTabla.setDataVector(null, columnas);
+
+        String sql = "SELECT NIT, NOMBRE, PUNTOS, ESTADO FROM CLIENTES ORDER BY PUNTOS DESC";
+
+        int totalPuntosSuma = 0;
+        int clientesActivos = 0;
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql);
+                     ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        String nit = rs.getString("NIT");
+                        String nombre = rs.getString("NOMBRE");
+                        int puntos = rs.getInt("PUNTOS");
+                        boolean activo = rs.getInt("ESTADO") == 1;
+
+                        totalPuntosSuma += puntos;
+                        if (activo) clientesActivos++;
+
+                        String nivel = "Bronce";
+                        if (puntos >= 50) nivel = "Oro ⭐⭐⭐";
+                        else if (puntos >= 30) nivel = "Plata ⭐⭐";
+                        else if (puntos >= 10) nivel = "Bronce ⭐";
+
+                        modeloTabla.addRow(new Object[]{
+                            nit,
+                            nombre,
+                            puntos + " pts",
+                            activo ? "Activo" : "Inactivo",
+                            nivel
+                        });
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al recargar reporte de fidelización desde Oracle XE: " + e.getMessage());
+        }
+
+        actualizarKPI("Padrón de Clientes", clientesActivos + " clientes activos", totalPuntosSuma + " pts acumulados");
     }
 
-    private JPanel crearPanelTabla(DefaultTableModel model) {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setBorder(new EmptyBorder(10, 10, 10, 10));
-        JTable table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        table.setRowHeight(25);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        p.add(new JScrollPane(table), BorderLayout.CENTER);
-        return p;
+    private void actualizarKPI(String kpi1, String kpi2, String kpi3) {
+        lblTotalVentas.setText("<html><div style='text-align: center;'><b>Métrica Principal</b><br><span style='font-size:14px; color:#229954;'>" + kpi1 + "</span></div></html>");
+        lblTotalPedidos.setText("<html><div style='text-align: center;'><b>Volumen Operativo</b><br><span style='font-size:14px; color:#182B49;'>" + kpi2 + "</span></div></html>");
+        lblTotalPuntosEmitidos.setText("<html><div style='text-align: center;'><b>Programa Lealtad</b><br><span style='font-size:14px; color:#8E44AD;'>" + kpi3 + "</span></div></html>");
+    }
+
+    private void regresarMenu() {
+        this.dispose();
+        new FrmPrincipal(usuarioSesion).setVisible(true);
     }
 
     public static void main(String[] args) {

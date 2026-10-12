@@ -6,12 +6,17 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
+import proyecto.progra2.conexion.ConexionOracle;
 import proyecto.progra2.modelos.*;
 
 public class FrmPedidos extends JFrame {
 
-    private JTextField txtBuscarNit, txtNombreCliente, txtPuntosCliente, txtCantidad, txtCodigoCupon;
+    private JTextField txtBuscarNit, txtNombreCliente, txtPuntosCliente, txtCodigoCupon;
+    private JSpinner spCantidad;
     private JComboBox<Object> cbProductos;
     private JTable tablaDetalle;
     private DefaultTableModel modeloTabla;
@@ -42,11 +47,11 @@ public class FrmPedidos extends JFrame {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignored) {}
 
         setTitle("Módulo de Ventas, Pedidos y Cobro con Canje de Cupones");
-        setSize(1080, 720);
+        setSize(1120, 740);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(COLOR_BG_LIGHT);
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(12, 12));
 
         // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
@@ -78,16 +83,15 @@ public class FrmPedidos extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Izquierdo: Selección de Cliente, Productos y Canje ---
-        JPanel panelIzquierdo = new JPanel(new BorderLayout(0, 8));
+        // --- Panel Izquierdo ---
+        JPanel panelIzquierdo = new JPanel(new BorderLayout(0, 10));
         panelIzquierdo.setOpaque(false);
-        panelIzquierdo.setPreferredSize(new Dimension(380, 0));
+        panelIzquierdo.setPreferredSize(new Dimension(420, 0));
         panelIzquierdo.setBorder(new EmptyBorder(10, 15, 10, 5));
 
         Font fontLabel = new Font("Segoe UI", Font.BOLD, 12);
         Font fontText = new Font("Segoe UI", Font.PLAIN, 12);
 
-        // Panel Vertical para Apilar las Cards
         JPanel panelCards = new JPanel();
         panelCards.setLayout(new BoxLayout(panelCards, BoxLayout.Y_AXIS));
         panelCards.setOpaque(false);
@@ -95,49 +99,49 @@ public class FrmPedidos extends JFrame {
         // Card 1: Cliente
         JPanel panelCliente = new JPanel(new GridBagLayout());
         panelCliente.setBackground(Color.WHITE);
-        panelCliente.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "1. Datos del Cliente"));
+        panelCliente.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "1. Datos del Cliente", 0, 0, fontLabel, COLOR_PRIMARY));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(4, 5, 4, 5);
+        gbc.insets = new Insets(6, 8, 6, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0; panelCliente.add(new JLabel("NIT / DPI:"), gbc);
-        gbc.gridx = 1; txtBuscarNit = crearCampoTexto(fontText); panelCliente.add(txtBuscarNit, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0; panelCliente.add(new JLabel("NIT / DPI:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; txtBuscarNit = crearCampoTexto(fontText); panelCliente.add(txtBuscarNit, gbc);
 
         btnBuscarCliente = crearBoton("Buscar", COLOR_PRIMARY, Color.WHITE);
         btnBuscarCliente.addActionListener(e -> buscarCliente());
-        gbc.gridx = 2; panelCliente.add(btnBuscarCliente, gbc);
+        gbc.gridx = 2; gbc.weightx = 0.0; panelCliente.add(btnBuscarCliente, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1; panelCliente.add(new JLabel("Nombre:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0; panelCliente.add(new JLabel("Nombre:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         txtNombreCliente = crearCampoTexto(fontText);
         txtNombreCliente.setEditable(false);
         panelCliente.add(txtNombreCliente, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; panelCliente.add(new JLabel("Puntos:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.weightx = 0.0; panelCliente.add(new JLabel("Puntos:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         txtPuntosCliente = crearCampoTexto(fontText);
         txtPuntosCliente.setEditable(false);
         panelCliente.add(txtPuntosCliente, gbc);
 
         panelCards.add(panelCliente);
-        panelCards.add(Box.createRigidArea(new Dimension(0, 8)));
+        panelCards.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Card 2: Validar Cupón de Canje de la App Móvil
+        // Card 2: Validar Cupón App Móvil
         JPanel panelCupon = new JPanel(new GridBagLayout());
         panelCupon.setBackground(Color.WHITE);
-        panelCupon.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "2. Validar Cupón App Móvil"));
+        panelCupon.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "2. Validar Cupón App Móvil", 0, 0, fontLabel, COLOR_PRIMARY));
 
         GridBagConstraints gbcC = new GridBagConstraints();
-        gbcC.insets = new Insets(4, 5, 4, 5);
+        gbcC.insets = new Insets(6, 8, 6, 8);
         gbcC.fill = GridBagConstraints.HORIZONTAL;
 
-        gbcC.gridx = 0; gbcC.gridy = 0; panelCupon.add(new JLabel("Cupón (PAN-):"), gbcC);
-        gbcC.gridx = 1; txtCodigoCupon = crearCampoTexto(fontText); panelCupon.add(txtCodigoCupon, gbcC);
+        gbcC.gridx = 0; gbcC.gridy = 0; gbcC.weightx = 0.0; panelCupon.add(new JLabel("Cupón:"), gbcC);
+        gbcC.gridx = 1; gbcC.weightx = 1.0; txtCodigoCupon = crearCampoTexto(fontText); panelCupon.add(txtCodigoCupon, gbcC);
 
         btnAplicarCupon = crearBoton("Aplicar", new Color(142, 68, 173), Color.WHITE);
         btnAplicarCupon.addActionListener(e -> validarYAplicarCupon());
-        gbcC.gridx = 2; panelCupon.add(btnAplicarCupon, gbcC);
+        gbcC.gridx = 2; gbcC.weightx = 0.0; panelCupon.add(btnAplicarCupon, gbcC);
 
         lblCuponAplicado = new JLabel("Ningún cupón aplicado");
         lblCuponAplicado.setFont(new Font("Segoe UI", Font.ITALIC, 11));
@@ -146,30 +150,39 @@ public class FrmPedidos extends JFrame {
         panelCupon.add(lblCuponAplicado, gbcC);
 
         panelCards.add(panelCupon);
-        panelCards.add(Box.createRigidArea(new Dimension(0, 8)));
+        panelCards.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Card 3: Agregar Productos
+        // Card 3: Productos
         JPanel panelProd = new JPanel(new GridBagLayout());
         panelProd.setBackground(Color.WHITE);
-        panelProd.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "3. Selección de Producto / Menú"));
+        panelProd.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "3. Selección de Producto / Menú", 0, 0, fontLabel, COLOR_PRIMARY));
 
         GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.insets = new Insets(5, 5, 5, 5);
+        gbc2.insets = new Insets(6, 8, 6, 8);
         gbc2.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc2.gridx = 0; gbc2.gridy = 0; panelProd.add(new JLabel("Ítem:"), gbc2);
-        gbc2.gridx = 1; gbc2.gridwidth = 2;
+        gbc2.gridx = 0; gbc2.gridy = 0; gbc2.weightx = 0.0; panelProd.add(new JLabel("Producto:"), gbc2);
+        gbc2.gridx = 1; gbc2.gridwidth = 2; gbc2.weightx = 1.0;
         cbProductos = new JComboBox<>();
         cbProductos.setFont(fontText);
+        cbProductos.setPreferredSize(new Dimension(200, 28));
         panelProd.add(cbProductos, gbc2);
 
-        gbc2.gridx = 0; gbc2.gridy = 1; gbc2.gridwidth = 1; panelProd.add(new JLabel("Cantidad:"), gbc2);
-        gbc2.gridx = 1; txtCantidad = crearCampoTexto(fontText); txtCantidad.setText("1"); panelProd.add(txtCantidad, gbc2);
+        gbc2.gridx = 0; gbc2.gridy = 1; gbc2.gridwidth = 1; gbc2.weightx = 0.0; panelProd.add(new JLabel("Cantidad:"), gbc2);
+        gbc2.gridx = 1; gbc2.gridwidth = 2; gbc2.weightx = 1.0;
+        
+        SpinnerNumberModel modelSpinner = new SpinnerNumberModel(1, 1, 999, 1);
+        spCantidad = new JSpinner(modelSpinner);
+        spCantidad.setFont(fontText);
+        spCantidad.setPreferredSize(new Dimension(100, 28));
+        panelProd.add(spCantidad, gbc2);
 
         btnAgregarItem = crearBoton("Agregar al Pedido", new Color(34, 153, 84), Color.WHITE);
+        btnAgregarItem.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnAgregarItem.setPreferredSize(new Dimension(0, 34));
         btnAgregarItem.addActionListener(e -> agregarItem());
         gbc2.gridx = 0; gbc2.gridy = 2; gbc2.gridwidth = 3;
-        gbc2.insets = new Insets(10, 5, 5, 5);
+        gbc2.insets = new Insets(10, 8, 8, 8);
         panelProd.add(btnAgregarItem, gbc2);
 
         panelCards.add(panelProd);
@@ -178,7 +191,7 @@ public class FrmPedidos extends JFrame {
         add(panelIzquierdo, BorderLayout.WEST);
 
         // --- Panel Derecho: Tabla y Resumen Totales ---
-        JPanel panelDerecho = new JPanel(new BorderLayout(5, 5));
+        JPanel panelDerecho = new JPanel(new BorderLayout(8, 8));
         panelDerecho.setOpaque(false);
         panelDerecho.setBorder(new EmptyBorder(10, 5, 10, 15));
 
@@ -189,18 +202,18 @@ public class FrmPedidos extends JFrame {
 
         tablaDetalle = new JTable(modeloTabla);
         tablaDetalle.setFont(fontText);
-        tablaDetalle.setRowHeight(25);
+        tablaDetalle.setRowHeight(28);
         tablaDetalle.getTableHeader().setFont(fontLabel);
 
         panelDerecho.add(new JScrollPane(tablaDetalle), BorderLayout.CENTER);
 
-        // Panel Inferior: Totales y Opciones de Pago
+        // Panel Inferior: Totales
         JPanel panelInferior = new JPanel(new BorderLayout(10, 10));
         panelInferior.setOpaque(false);
 
         JPanel panelTotales = new JPanel(new GridLayout(3, 1, 5, 5));
         panelTotales.setBackground(Color.WHITE);
-        panelTotales.setBorder(new EmptyBorder(10, 15, 10, 15));
+        panelTotales.setBorder(new CompoundBorder(new LineBorder(new Color(200, 205, 210), 1), new EmptyBorder(12, 18, 12, 18)));
 
         lblSubtotal = new JLabel("Subtotal: Q0.00");
         lblSubtotal.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -217,15 +230,15 @@ public class FrmPedidos extends JFrame {
         panelTotales.add(lblPuntosGanados);
         panelTotales.add(lblTotal);
 
-        JPanel panelBotonesPago = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 6));
+        JPanel panelBotonesPago = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
         panelBotonesPago.setOpaque(false);
 
-        btnEliminarItem = crearBoton("Quitar", new Color(176, 58, 46), Color.WHITE);
-        btnEliminarItem.setPreferredSize(new Dimension(80, 36));
+        btnEliminarItem = crearBoton("Quitar Ítem", new Color(176, 58, 46), Color.WHITE);
+        btnEliminarItem.setPreferredSize(new Dimension(100, 36));
         btnEliminarItem.addActionListener(e -> eliminarItem());
 
         btnCobrarCupon = crearBoton("Canjear Cupón", new Color(142, 68, 173), Color.WHITE);
-        btnCobrarCupon.setPreferredSize(new Dimension(120, 36));
+        btnCobrarCupon.setPreferredSize(new Dimension(125, 36));
         btnCobrarCupon.addActionListener(e -> cobrarConCupon());
 
         btnCobrarEfectivo = crearBoton("Efectivo", new Color(34, 153, 84), Color.WHITE);
@@ -233,11 +246,11 @@ public class FrmPedidos extends JFrame {
         btnCobrarEfectivo.addActionListener(e -> cobrarEfectivo());
 
         btnCobrarTarjeta = crearBoton("Tarjeta", new Color(40, 116, 166), Color.WHITE);
-        btnCobrarTarjeta.setPreferredSize(new Dimension(95, 36));
+        btnCobrarTarjeta.setPreferredSize(new Dimension(100, 36));
         btnCobrarTarjeta.addActionListener(e -> cobrarTarjeta());
 
         btnCobrarMixto = crearBoton("Mixto", new Color(70, 80, 95), Color.WHITE);
-        btnCobrarMixto.setPreferredSize(new Dimension(90, 36));
+        btnCobrarMixto.setPreferredSize(new Dimension(95, 36));
         btnCobrarMixto.addActionListener(e -> cobrarMixto());
 
         panelBotonesPago.add(btnEliminarItem);
@@ -260,7 +273,7 @@ public class FrmPedidos extends JFrame {
     private JTextField crearCampoTexto(Font font) {
         JTextField field = new JTextField();
         field.setFont(font);
-        field.setPreferredSize(new Dimension(120, 26));
+        field.setPreferredSize(new Dimension(130, 28));
         field.setBorder(new CompoundBorder(new LineBorder(new Color(190, 195, 200), 1), new EmptyBorder(2, 6, 2, 6)));
         return field;
     }
@@ -320,7 +333,6 @@ public class FrmPedidos extends JFrame {
         }
     }
 
-    // Método para validar el código de cupón de la app móvil en la caja
     private void validarYAplicarCupon() {
         String codigo = txtCodigoCupon.getText().trim();
 
@@ -350,7 +362,7 @@ public class FrmPedidos extends JFrame {
         if (itemSeleccionado == null) return;
 
         try {
-            int cant = Integer.parseInt(txtCantidad.getText().trim());
+            int cant = (Integer) spCantidad.getValue();
             if (cant <= 0) {
                 JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a 0.", "Error", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -362,19 +374,13 @@ public class FrmPedidos extends JFrame {
                     JOptionPane.showMessageDialog(this, "Stock insuficiente. Unidades disponibles: " + p.getExistencia(), "Inventario", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-            } else if (itemSeleccionado instanceof MenuCompleto) {
-                MenuCompleto m = (MenuCompleto) itemSeleccionado;
-                if (!m.hayStockDisponible(cant)) {
-                    JOptionPane.showMessageDialog(this, "Stock insuficiente de los componentes del menú.", "Inventario", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
             }
 
             pedidoActual.agregarDetalle(itemSeleccionado, cant);
             actualizarTabla();
-            txtCantidad.setText("1");
+            spCantidad.setValue(1);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Ingrese una cantidad entera válida.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Ingrese una cantidad válida.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -410,7 +416,6 @@ public class FrmPedidos extends JFrame {
         lblTotal.setText(String.format("TOTAL A PAGAR: Q%.2f %s", totalPagar, cuponAplicado ? "(DESCUENTO CANJE 100%)" : ""));
     }
 
-    // Cobro procesando el Cupón de Canje de la App Móvil
     private void cobrarConCupon() {
         if (!validarPedido()) return;
 
@@ -528,49 +533,180 @@ public class FrmPedidos extends JFrame {
         return true;
     }
 
+    // REGISTRO DE VENTA, DETALLES Y PUNTOS EN BASE DE DATOS ORACLE XE
     private void confirmarVenta(String mensajePago) {
-        for (DetallePedido d : pedidoActual.getDetalles()) {
-            ItemVenta item = d.getItem();
-            int cant = d.getCantidad();
-
-            if (item instanceof ProductoIndividual) {
-                ProductoIndividual p = (ProductoIndividual) item;
-                p.setExistencia(p.getExistencia() - cant);
-            } else if (item instanceof MenuCompleto) {
-                MenuCompleto m = (MenuCompleto) item;
-                m.getSandwich().setExistencia(m.getSandwich().getExistencia() - cant);
-                m.getBebida().setExistencia(m.getBebida().getExistencia() - cant);
-                m.getAcompanamiento().setExistencia(m.getAcompanamiento().getExistencia() - cant);
-            }
-        }
-
-        int puntosGanados = cuponAplicado ? 0 : pedidoActual.calcularPuntosTotales();
-        if (puntosGanados > 0) {
-            clienteActual.acumularPuntos(puntosGanados);
-        }
-
-        pedidoActual.setEstado("PAGADO");
-
         double totalFinal = cuponAplicado ? 0.00 : pedidoActual.calcularTotal();
+        int puntosGanados = cuponAplicado ? 0 : pedidoActual.calcularPuntosTotales();
 
-        String comprobante = "============== COMPROBANTE DE VENTA ==============\n"
-                + "Cliente: " + clienteActual.getNombre() + " (NIT: " + clienteActual.getNit() + ")\n"
-                + "Total Pagado: Q" + String.format("%.2f", totalFinal) + "\n"
-                + "Método de Pago: " + pedidoActual.getMetodoPago() + "\n"
-                + (cuponAplicado ? "Cupón de Canje Aplicado: " + codigoCuponValidado + "\n" : "")
-                + "Puntos Acreditados: +" + puntosGanados + " pts\n"
-                + "Saldo Total Puntos: " + clienteActual.getPuntos() + " pts\n"
-                + "==================================================";
+        int idPedidoGenerado = guardarPedidoEnOracle(totalFinal, puntosGanados);
 
-        JOptionPane.showMessageDialog(this, mensajePago + "\n\n" + comprobante, "Venta Finalizada", JOptionPane.INFORMATION_MESSAGE);
+        if (idPedidoGenerado > 0) {
+            // Guardar detalles y descontar inventarios
+            for (DetallePedido d : pedidoActual.getDetalles()) {
+                ItemVenta item = d.getItem();
+                int cant = d.getCantidad();
+                int idProducto = obtenerIdProductoPorNombre(item.getNombre());
 
-        cuponAplicado = false;
-        codigoCuponValidado = "";
-        lblCuponAplicado.setText("Ningún cupón aplicado");
-        lblCuponAplicado.setForeground(Color.GRAY);
-        txtCodigoCupon.setText("");
+                guardarDetalleEnOracle(idPedidoGenerado, idProducto, cant, item.getPrecio(), d.getSubtotal(), d.getPuntos());
 
-        buscarCliente();
+                if (item instanceof ProductoIndividual) {
+                    ProductoIndividual p = (ProductoIndividual) item;
+                    gestionInventario.abastecerInventario(p.getCodigo(), -cant);
+                } else if (item instanceof MenuCompleto) {
+                    descontarComponentesCombo(cant);
+                }
+            }
+
+            // Actualizar Puntos del Cliente en Oracle XE
+            if (puntosGanados > 0 && clienteActual != null) {
+                actualizarPuntosClienteEnOracle(clienteActual.getNit(), puntosGanados);
+                clienteActual.acumularPuntos(puntosGanados);
+            }
+
+            String comprobante = "============== COMPROBANTE DE VENTA ==============\n"
+                    + "No. Orden: PED-" + String.format("%04d", idPedidoGenerado) + "\n"
+                    + "Cliente: " + clienteActual.getNombre() + " (NIT: " + clienteActual.getNit() + ")\n"
+                    + "Total Pagado: Q" + String.format("%.2f", totalFinal) + "\n"
+                    + "Método de Pago: " + pedidoActual.getMetodoPago() + "\n"
+                    + (cuponAplicado ? "Cupón de Canje Aplicado: " + codigoCuponValidado + "\n" : "")
+                    + "Puntos Acreditados: +" + puntosGanados + " pts\n"
+                    + "Saldo Total Puntos: " + clienteActual.getPuntos() + " pts\n"
+                    + "==================================================";
+
+            JOptionPane.showMessageDialog(this, mensajePago + "\n\n" + comprobante, "Venta Finalizada", JOptionPane.INFORMATION_MESSAGE);
+
+            cuponAplicado = false;
+            codigoCuponValidado = "";
+            lblCuponAplicado.setText("Ningún cupón aplicado");
+            lblCuponAplicado.setForeground(Color.GRAY);
+            txtCodigoCupon.setText("");
+
+            buscarCliente();
+        } else {
+            JOptionPane.showMessageDialog(this, "Ocurrió un error al registrar la venta en la base de datos.", "Error de Persistencia", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private int guardarPedidoEnOracle(double total, int puntos) {
+        String sql = "INSERT INTO PEDIDOS (ID_PEDIDO, NIT_CLIENTE, TOTAL, PUNTOS_GANADOS, METODO_PAGO, NO_REFERENCIA, ESTADO) " +
+                     "VALUES (SEQ_PEDIDOS.NEXTVAL, ?, ?, ?, ?, ?, 'PAGADO')";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                String[] returnCols = {"ID_PEDIDO"};
+                try (PreparedStatement stmt = conn.prepareStatement(sql, returnCols)) {
+                    stmt.setString(1, clienteActual != null ? clienteActual.getNit() : "CF");
+                    stmt.setDouble(2, total);
+                    stmt.setInt(3, puntos);
+                    stmt.setString(4, pedidoActual.getMetodoPago());
+                    stmt.setString(5, pedidoActual.getNumeroReferencia() != null ? pedidoActual.getNumeroReferencia() : "N/A");
+
+                    int filas = stmt.executeUpdate();
+                    if (filas > 0) {
+                        try (ResultSet rs = stmt.getGeneratedKeys()) {
+                            if (rs.next()) {
+                                int id = rs.getInt(1);
+                                if (!conn.getAutoCommit()) conn.commit();
+                                return id;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al insertar PEDIDO en Oracle XE: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    private void guardarDetalleEnOracle(int idPedido, int idProducto, int cantidad, double precioUnit, double subtotal, int puntos) {
+        String sql = "INSERT INTO DETALLE_PEDIDOS (ID_DETALLE, ID_PEDIDO, ID_PRODUCTO, CANTIDAD, PRECIO_UNITARIO, SUBTOTAL, PUNTOS_GENERADOS) " +
+                     "VALUES (SEQ_DETALLE_PEDIDOS.NEXTVAL, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setInt(1, idPedido);
+                    stmt.setInt(2, idProducto);
+                    stmt.setInt(3, cantidad);
+                    stmt.setDouble(4, precioUnit);
+                    stmt.setDouble(5, subtotal);
+                    stmt.setInt(6, puntos);
+
+                    stmt.executeUpdate();
+                    if (!conn.getAutoCommit()) conn.commit();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al insertar DETALLE_PEDIDO en Oracle XE: " + e.getMessage());
+        }
+    }
+
+    private int obtenerIdProductoPorNombre(String nombre) {
+        String sql = "SELECT ID_PRODUCTO FROM PRODUCTOS WHERE LOWER(NOMBRE) = LOWER(?) AND ROWNUM = 1";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, nombre.trim());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            return rs.getInt("ID_PRODUCTO");
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return 1;
+    }
+
+    private void actualizarPuntosClienteEnOracle(String nit, int puntosSuma) {
+        String sql = "UPDATE CLIENTES SET PUNTOS = PUNTOS + ? WHERE UPPER(NIT) = UPPER(?)";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setInt(1, puntosSuma);
+                    stmt.setString(2, nit.trim());
+
+                    stmt.executeUpdate();
+                    if (!conn.getAutoCommit()) conn.commit();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al actualizar puntos del cliente en Oracle XE: " + e.getMessage());
+        }
+    }
+
+    private void descontarComponentesCombo(int cantidadCombos) {
+        String sqlDescuento = "UPDATE PRODUCTOS SET EXISTENCIA = EXISTENCIA - ? " +
+                             "WHERE CATEGORIA = ? AND ROWNUM = 1 AND EXISTENCIA >= ?";
+
+        try (Connection conn = ConexionOracle.obtenerConexion()) {
+            if (conn != null) {
+                try (PreparedStatement stmt = conn.prepareStatement(sqlDescuento)) {
+                    stmt.setInt(1, cantidadCombos);
+                    stmt.setString(2, "Sandwich");
+                    stmt.setInt(3, cantidadCombos);
+                    stmt.executeUpdate();
+                }
+                try (PreparedStatement stmt = conn.prepareStatement(sqlDescuento)) {
+                    stmt.setInt(1, cantidadCombos);
+                    stmt.setString(2, "Bebida");
+                    stmt.setInt(3, cantidadCombos);
+                    stmt.executeUpdate();
+                }
+                try (PreparedStatement stmt = conn.prepareStatement(sqlDescuento)) {
+                    stmt.setInt(1, cantidadCombos);
+                    stmt.setString(2, "Acompanamiento");
+                    stmt.setInt(3, cantidadCombos);
+                    stmt.executeUpdate();
+                }
+                if (!conn.getAutoCommit()) conn.commit();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al descontar componentes del combo en Oracle XE: " + e.getMessage());
+        }
     }
 
     private void regresarMenu() {

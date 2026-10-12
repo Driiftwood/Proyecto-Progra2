@@ -4,29 +4,26 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
-import proyecto.progra2.modelos.*;
+import proyecto.progra2.modelos.Cliente;
+import proyecto.progra2.modelos.GestionClientes;
+import proyecto.progra2.modelos.Usuario;
 
 public class FrmCanjePuntos extends JFrame {
 
-    private JTextField txtNit, txtCliente, txtPuntosActuales;
-    private JComboBox<Recompensa> cbRecompensas;
-    private JButton btnBuscarCliente, btnCanjear, btnRegresar;
-    private JTable tablaHistorial;
-    private DefaultTableModel modeloTabla;
+    private JTextField txtNitCliente, txtNombreCliente, txtPuntosCliente;
+    private JComboBox<String> cbPremios;
+    private JLabel lblCodigoCuponGenerado;
+    private JButton btnBuscar, btnCanjear, btnRegresar;
 
     private GestionClientes gestionClientes;
-    private GestionInventario gestionInventario;
-    private Cliente clienteActual;
+    private Cliente clienteSeleccionado;
     private Usuario usuarioSesion;
-    private List<Recompensa> catalogoRecompensas;
 
-    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      
-    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  
+    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);
+    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);
 
     public FrmCanjePuntos() {
         this(null);
@@ -35,15 +32,11 @@ public class FrmCanjePuntos extends JFrame {
     public FrmCanjePuntos(Usuario usuario) {
         this.usuarioSesion = usuario;
         gestionClientes = new GestionClientes();
-        gestionInventario = new GestionInventario();
-        catalogoRecompensas = new ArrayList<>();
 
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignored) {}
 
-        cargarCatalogoRecompensas();
-
-        setTitle("Módulo de Fidelización y Canje de Puntos");
-        setSize(880, 540);
+        setTitle("Módulo de Canje de Puntos y Generación de Cupones");
+        setSize(780, 520);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(COLOR_BG_LIGHT);
@@ -58,12 +51,12 @@ public class FrmCanjePuntos extends JFrame {
         panelTitulos.setOpaque(false);
         panelTitulos.setLayout(new BoxLayout(panelTitulos, BoxLayout.Y_AXIS));
 
-        JLabel lblTitulo = new JLabel("MÓDULO DE FIDELIZACIÓN Y CANJE DE RECOMPENSAS");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        JLabel lblTitulo = new JLabel("MÓDULO DE CANJE DE PUNTOS DE FIDELIZACIÓN");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblTitulo.setForeground(Color.WHITE);
 
-        JLabel lblSub = new JLabel("Canje de puntos acumulados por productos del catálogo");
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        JLabel lblSub = new JLabel("Canjea puntos acumulados por productos o menús y genera el cupón de descuento PAN-XXXXXX");
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblSub.setForeground(new Color(200, 215, 235));
 
         panelTitulos.add(lblTitulo);
@@ -71,7 +64,7 @@ public class FrmCanjePuntos extends JFrame {
         panelTitulos.add(lblSub);
 
         btnRegresar = crearBoton("Volver al Menú", new Color(70, 85, 105), Color.WHITE);
-        btnRegresar.setPreferredSize(new Dimension(140, 32));
+        btnRegresar.setPreferredSize(new Dimension(130, 32));
         btnRegresar.addActionListener(e -> regresarMenu());
 
         panelHeader.add(panelTitulos, BorderLayout.WEST);
@@ -79,89 +72,86 @@ public class FrmCanjePuntos extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Izquierdo: Selección y Canje ---
-        JPanel panelIzquierdo = new JPanel(new GridBagLayout());
-        panelIzquierdo.setOpaque(false);
-        panelIzquierdo.setPreferredSize(new Dimension(380, 0));
-        panelIzquierdo.setBorder(new EmptyBorder(10, 15, 10, 5));
+        // --- Formulario Central ---
+        JPanel panelCentral = new JPanel(new GridBagLayout());
+        panelCentral.setBackground(Color.WHITE);
+        panelCentral.setBorder(new CompoundBorder(new EmptyBorder(15, 20, 15, 20), new LineBorder(new Color(210, 215, 220), 1)));
+
+        Font fontText = new Font("Segoe UI", Font.PLAIN, 12);
+        Font fontBold = new Font("Segoe UI", Font.BOLD, 12);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 6, 8, 6);
+        gbc.insets = new Insets(8, 10, 8, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        Font fontLabel = new Font("Segoe UI", Font.BOLD, 12);
-        Font fontText = new Font("Segoe UI", Font.PLAIN, 12);
+        // NIT
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0;
+        panelCentral.add(new JLabel("NIT / DPI Cliente:"), gbc);
 
-        gbc.gridx = 0; gbc.gridy = 0; panelIzquierdo.add(new JLabel("NIT / DPI:"), gbc);
-        gbc.gridx = 1; txtNit = crearCampoTexto(fontText); panelIzquierdo.add(txtNit, gbc);
+        txtNitCliente = crearCampoTexto(fontText);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        panelCentral.add(txtNitCliente, gbc);
 
-        btnBuscarCliente = crearBoton("Buscar", COLOR_PRIMARY, Color.WHITE);
-        btnBuscarCliente.addActionListener(e -> buscarCliente());
-        gbc.gridx = 2; panelIzquierdo.add(btnBuscarCliente, gbc);
+        btnBuscar = crearBoton("Buscar Cliente", COLOR_PRIMARY, Color.WHITE);
+        btnBuscar.addActionListener(e -> buscarCliente());
+        gbc.gridx = 2; gbc.weightx = 0.0;
+        panelCentral.add(btnBuscar, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1; panelIzquierdo.add(new JLabel("Cliente:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2;
-        txtCliente = crearCampoTexto(fontText); txtCliente.setEditable(false);
-        panelIzquierdo.add(txtCliente, gbc);
+        // Nombre
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0;
+        panelCentral.add(new JLabel("Nombre Cliente:"), gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; panelIzquierdo.add(new JLabel("Saldo Puntos:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2;
-        txtPuntosActuales = crearCampoTexto(fontText); txtPuntosActuales.setEditable(false);
-        txtPuntosActuales.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        txtPuntosActuales.setForeground(new Color(20, 110, 180));
-        panelIzquierdo.add(txtPuntosActuales, gbc);
+        txtNombreCliente = crearCampoTexto(fontText);
+        txtNombreCliente.setEditable(false);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
+        panelCentral.add(txtNombreCliente, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; panelIzquierdo.add(new JLabel("Recompensa:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2;
-        cbRecompensas = new JComboBox<>();
-        cbRecompensas.setFont(fontText);
-        for (Recompensa r : catalogoRecompensas) cbRecompensas.addItem(r);
-        panelIzquierdo.add(cbRecompensas, gbc);
+        // Puntos
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.weightx = 0.0;
+        panelCentral.add(new JLabel("Puntos Disponibles:"), gbc);
 
-        btnCanjear = crearBoton("Confirmar Canje", new Color(34, 153, 84), Color.WHITE);
-        btnCanjear.setPreferredSize(new Dimension(160, 36));
-        btnCanjear.addActionListener(e -> realizarCanje());
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3;
-        gbc.insets = new Insets(18, 6, 8, 6);
-        panelIzquierdo.add(btnCanjear, gbc);
+        txtPuntosCliente = crearCampoTexto(fontBold);
+        txtPuntosCliente.setEditable(false);
+        txtPuntosCliente.setForeground(new Color(20, 110, 180));
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
+        panelCentral.add(txtPuntosCliente, gbc);
 
-        add(panelIzquierdo, BorderLayout.WEST);
+        // Selección de Premio
+        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0.0;
+        panelCentral.add(new JLabel("Seleccionar Premio:"), gbc);
 
-        // --- Panel Derecho: Historial de Canjes ---
-        JPanel panelTabla = new JPanel(new BorderLayout(5, 5));
-        panelTabla.setOpaque(false);
-        panelTabla.setBorder(new EmptyBorder(10, 5, 10, 15));
+        cbPremios = new JComboBox<>(new String[]{
+            "Sándwich Jamón y Queso (25 Puntos)",
+            "Gaseosa / Bebida (10 Puntos)",
+            "Papas Fritas (15 Puntos)",
+            "Menú Completo (50 Puntos)"
+        });
+        cbPremios.setFont(fontText);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
+        panelCentral.add(cbPremios, gbc);
 
-        String[] columnas = {"Recompensa", "Puntos Requeridos", "Estado Canje"};
-        modeloTabla = new DefaultTableModel(columnas, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-        };
+        // Botón Canjear
+        btnCanjear = crearBoton("PROCESAR CANJE Y GENERAR CUPÓN", new Color(34, 153, 84), Color.WHITE);
+        btnCanjear.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnCanjear.setPreferredSize(new Dimension(0, 38));
+        btnCanjear.addActionListener(e -> procesarCanje());
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3; gbc.insets = new Insets(15, 10, 10, 10);
+        panelCentral.add(btnCanjear, gbc);
 
-        tablaHistorial = new JTable(modeloTabla);
-        tablaHistorial.setFont(fontText);
-        tablaHistorial.setRowHeight(25);
-        tablaHistorial.getTableHeader().setFont(fontLabel);
+        // Cupón Generado
+        lblCodigoCuponGenerado = new JLabel("CUPÓN: NINGUNO GENERADO", SwingConstants.CENTER);
+        lblCodigoCuponGenerado.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblCodigoCuponGenerado.setForeground(new Color(142, 68, 173));
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 3;
+        panelCentral.add(lblCodigoCuponGenerado, gbc);
 
-        panelTabla.add(new JScrollPane(tablaHistorial), BorderLayout.CENTER);
-        add(panelTabla, BorderLayout.CENTER);
-    }
-
-    private void cargarCatalogoRecompensas() {
-        ProductoIndividual beb = gestionInventario.getListaProductos().stream().filter(p -> p.getCategoria().equals("BEBIDA")).findFirst().orElse(null);
-        ProductoIndividual aco = gestionInventario.getListaProductos().stream().filter(p -> p.getCategoria().equals("ACOMPANAMIENTO")).findFirst().orElse(null);
-        ProductoIndividual san = gestionInventario.getListaProductos().stream().filter(p -> p.getCategoria().equals("SANDWICH")).findFirst().orElse(null);
-        MenuCompleto men = gestionInventario.getListaMenus().isEmpty() ? null : gestionInventario.getListaMenus().get(0);
-
-        catalogoRecompensas.add(new Recompensa("REC01", "Bebida Gratuita", 10, beb));
-        catalogoRecompensas.add(new Recompensa("REC02", "Acompañamiento Gratuito", 15, aco));
-        catalogoRecompensas.add(new Recompensa("REC03", "Sándwich Individual Gratuito", 30, san));
-        catalogoRecompensas.add(new Recompensa("REC04", "Menú Completo Gratuito", 50, men));
+        add(panelCentral, BorderLayout.CENTER);
     }
 
     private JTextField crearCampoTexto(Font font) {
         JTextField field = new JTextField();
         field.setFont(font);
-        field.setPreferredSize(new Dimension(130, 28));
+        field.setPreferredSize(new Dimension(140, 28));
         field.setBorder(new CompoundBorder(new LineBorder(new Color(190, 195, 200), 1), new EmptyBorder(2, 6, 2, 6)));
         return field;
     }
@@ -176,69 +166,73 @@ public class FrmCanjePuntos extends JFrame {
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(100, 30));
         return btn;
     }
 
     private void buscarCliente() {
-        String nit = txtNit.getText().trim();
+        String nit = txtNitCliente.getText().trim();
         Cliente c = gestionClientes.buscarPorNit(nit);
         if (c != null) {
             if (!c.isActivo()) {
-                JOptionPane.showMessageDialog(this, "El cliente se encuentra inactivo.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "El cliente está desactivado.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            clienteActual = c;
-            txtCliente.setText(c.getNombre());
-            txtPuntosActuales.setText(c.getPuntos() + " pts");
+            clienteSeleccionado = c;
+            txtNombreCliente.setText(c.getNombre());
+            txtPuntosCliente.setText(c.getPuntos() + " pts");
         } else {
             JOptionPane.showMessageDialog(this, "Cliente no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void realizarCanje() {
-        if (clienteActual == null) {
-            JOptionPane.showMessageDialog(this, "Busque y seleccione un cliente primero.", "Aviso", JOptionPane.WARNING_MESSAGE);
+    private void procesarCanje() {
+        if (clienteSeleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione o busque un cliente válido.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        Recompensa recompensa = (Recompensa) cbRecompensas.getSelectedItem();
-        if (recompensa == null) return;
+        int index = cbPremios.getSelectedIndex();
+        int costoPuntos = 0;
 
-        if (clienteActual.getPuntos() < recompensa.getPuntosNecesarios()) {
-            JOptionPane.showMessageDialog(this, 
-                "Puntos insuficientes.\nEl cliente tiene: " + clienteActual.getPuntos() + " pts\nRequiere: " + recompensa.getPuntosNecesarios() + " pts", 
-                "Canje Rechazado", JOptionPane.ERROR_MESSAGE);
+        switch (index) {
+            case 0: costoPuntos = 25; break;
+            case 1: costoPuntos = 10; break;
+            case 2: costoPuntos = 15; break;
+            case 3: costoPuntos = 50; break;
+        }
+
+        if (clienteSeleccionado.getPuntos() < costoPuntos) {
+            JOptionPane.showMessageDialog(this, "Puntos insuficientes. El premio requiere " + costoPuntos + " pts.", "Puntos Insuficientes", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        ItemVenta item = recompensa.getItemAsociado();
-        if (item instanceof ProductoIndividual) {
-            ProductoIndividual p = (ProductoIndividual) item;
-            if (p.getExistencia() < 1) {
-                JOptionPane.showMessageDialog(this, "No hay existencias disponibles del producto en inventario.", "Canje Rechazado", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            p.setExistencia(p.getExistencia() - 1);
-        } else if (item instanceof MenuCompleto) {
-            MenuCompleto m = (MenuCompleto) item;
-            if (!m.hayStockDisponible(1)) {
-                JOptionPane.showMessageDialog(this, "No hay existencias suficientes de los componentes del menú.", "Canje Rechazado", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            m.getSandwich().setExistencia(m.getSandwich().getExistencia() - 1);
-            m.getBebida().setExistencia(m.getBebida().getExistencia() - 1);
-            m.getAcompanamiento().setExistencia(m.getAcompanamiento().getExistencia() - 1);
+        // DESCUENTO REAL Y DIRECTO EN ORACLE XE
+        boolean exitoBD = gestionClientes.descontarPuntos(clienteSeleccionado.getNit(), costoPuntos);
+
+        if (exitoBD) {
+            // Actualizar referencia local
+            clienteSeleccionado = gestionClientes.buscarPorNit(clienteSeleccionado.getNit());
+            txtPuntosCliente.setText(clienteSeleccionado.getPuntos() + " pts");
+
+            String codigoCupon = "PAN-" + generarAlfanumerico(5);
+            lblCodigoCuponGenerado.setText("CUPÓN VALIDADOR: " + codigoCupon);
+
+            JOptionPane.showMessageDialog(this, "¡Canje exitoso!\nSe descontaron " + costoPuntos + " puntos en Oracle XE.\n"
+                    + "Código de Cupón Generado: " + codigoCupon + "\n\n"
+                    + "Ingrese este código en el Módulo de Pedidos para aplicar el 100% de descuento.", "Canje Confirmado", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "No se pudo procesar el descuento de puntos en la base de datos.", "Error de BD", JOptionPane.ERROR_MESSAGE);
         }
+    }
 
-        clienteActual.descontarPuntos(recompensa.getPuntosNecesarios());
-        txtPuntosActuales.setText(clienteActual.getPuntos() + " pts");
-
-        modeloTabla.addRow(new Object[]{recompensa.getNombre(), "-" + recompensa.getPuntosNecesarios() + " pts", "APROBADO"});
-
-        JOptionPane.showMessageDialog(this, 
-            "¡CANJE EXITOSO!\n\nRecompensa: " + recompensa.getNombre() + "\nPuntos Descontados: -" + recompensa.getPuntosNecesarios() + " pts\nNuevo Saldo: " + clienteActual.getPuntos() + " pts", 
-            "Comprobante de Canje", JOptionPane.INFORMATION_MESSAGE);
+    private String generarAlfanumerico(int longitud) {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        StringBuilder sb = new StringBuilder();
+        Random rnd = new Random();
+        for (int i = 0; i < longitud; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private void regresarMenu() {
