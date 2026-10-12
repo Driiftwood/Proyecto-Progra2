@@ -1,310 +1,491 @@
 package proyecto.progra2.vistas;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
-import proyecto.progra2.modelos.DetallePedido;
-import proyecto.progra2.modelos.Pedido;
+import proyecto.progra2.modelos.*;
 
 public class FrmPedidos extends JFrame {
 
-    // Componentes de la interfaz
-    private JTextField txtIdCliente;
-    private JTextField txtIdProducto;
-    private JTextField txtNombreProducto;
-    private JTextField txtCantidad;
-    private JTextField txtPrecio;
-    private JButton btnAgregar;
-    private JButton btnEliminar;
-    private JButton btnProcesar;
-    private JTable tblDetalles;
+    private JTextField txtBuscarNit, txtNombreCliente, txtPuntosCliente, txtCantidad;
+    private JComboBox<Object> cbProductos;
+    private JTable tablaDetalle;
     private DefaultTableModel modeloTabla;
-    private JLabel lblTotal;
+    private JLabel lblSubtotal, lblTotal, lblPuntosGanados;
+    private JButton btnBuscarCliente, btnAgregarItem, btnEliminarItem, btnCobrarEfectivo, btnCobrarTarjeta, btnCobrarMixto, btnRegresar;
 
-    // Objeto principal de la lógica
+    private GestionClientes gestionClientes;
+    private GestionInventario gestionInventario;
+
+    private Cliente clienteActual;
     private Pedido pedidoActual;
+    private Usuario usuarioSesion;
 
-    // Paleta de Colores Corporativa
-    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      // Azul Marino
-    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  // Gris Claro
-    private static final Color COLOR_TEXT_DARK = new Color(33, 37, 41);   // Texto Oscuro
-
-    // Colores de Botones con Alto Contraste
-    private static final Color BTN_AGREGAR_BG = new Color(34, 139, 34);    // Verde Bosque Sólido
-    private static final Color BTN_ELIMINAR_BG = new Color(178, 34, 34);   // Rojo Fuego Sólido
-    private static final Color BTN_PROCESAR_BG = new Color(24, 43, 73);    // Azul Marino Sólido
+    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      
+    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  
 
     public FrmPedidos() {
-        pedidoActual = new Pedido(1001, 1);
+        this(null);
+    }
 
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+    public FrmPedidos(Usuario usuario) {
+        this.usuarioSesion = usuario;
+        gestionClientes = new GestionClientes();
+        gestionInventario = new GestionInventario();
 
-        setTitle("Sistema de Gestión de Pedidos - Punto de Venta");
-        setSize(850, 680);
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignored) {}
+
+        setTitle("Módulo de Ventas, Pedidos y Cobro");
+        setSize(1040, 660);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(COLOR_BG_LIGHT);
-        setLayout(new BorderLayout(15, 15));
+        setLayout(new BorderLayout(10, 10));
 
-        // --- 1. HEADER BANNER ---
+        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel lblTitulo = new JLabel("MÓDULO DE REGISTRO DE PEDIDOS");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        JPanel panelTitulos = new JPanel();
+        panelTitulos.setOpaque(false);
+        panelTitulos.setLayout(new BoxLayout(panelTitulos, BoxLayout.Y_AXIS));
+
+        JLabel lblTitulo = new JLabel("MÓDULO DE GESTIÓN DE PEDIDOS Y COBRO");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitulo.setForeground(Color.WHITE);
 
-        JLabel lblSubtitulo = new JLabel("Gestión de Compras y Detalles");
-        lblSubtitulo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSubtitulo.setForeground(new Color(200, 215, 235));
+        JLabel lblSub = new JLabel("Selección de cliente, detalle de orden, acumulación de puntos y procesamiento de pago");
+        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblSub.setForeground(new Color(200, 215, 235));
 
-        JPanel panelTextoHeader = new JPanel(new GridLayout(2, 1));
-        panelTextoHeader.setOpaque(false);
-        panelTextoHeader.add(lblTitulo);
-        panelTextoHeader.add(lblSubtitulo);
+        panelTitulos.add(lblTitulo);
+        panelTitulos.add(Box.createRigidArea(new Dimension(0, 4)));
+        panelTitulos.add(lblSub);
 
-        panelHeader.add(panelTextoHeader, BorderLayout.WEST);
+        btnRegresar = crearBoton("Volver al Menú", new Color(70, 85, 105), Color.WHITE);
+        btnRegresar.setPreferredSize(new Dimension(140, 32));
+        btnRegresar.addActionListener(e -> regresarMenu());
+
+        panelHeader.add(panelTitulos, BorderLayout.WEST);
+        panelHeader.add(btnRegresar, BorderLayout.EAST);
+
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- 2. CONTENIDO PRINCIPAL ---
-        JPanel panelCentro = new JPanel(new BorderLayout(10, 15));
-        panelCentro.setOpaque(false);
-        panelCentro.setBorder(new EmptyBorder(0, 15, 0, 15));
-
-        JPanel panelFormulario = new JPanel(new GridBagLayout());
-        panelFormulario.setBackground(Color.WHITE);
-        panelFormulario.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 224, 230), 1),
-                new EmptyBorder(15, 15, 15, 15)
-        ));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 6, 6, 6);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        // --- Panel Izquierdo: Selección de Cliente y Productos ---
+        JPanel panelIzquierdo = new JPanel(new BorderLayout(0, 10));
+        panelIzquierdo.setOpaque(false);
+        panelIzquierdo.setPreferredSize(new Dimension(380, 0));
+        panelIzquierdo.setBorder(new EmptyBorder(10, 15, 10, 5));
 
         Font fontLabel = new Font("Segoe UI", Font.BOLD, 12);
-        Font fontText = new Font("Segoe UI", Font.PLAIN, 13);
+        Font fontText = new Font("Segoe UI", Font.PLAIN, 12);
 
-        // Fila 0: ID Cliente y ID Producto
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.1;
-        panelFormulario.add(crearLabel("ID Cliente:", fontLabel), gbc);
+        // Card 1: Cliente
+        JPanel panelCliente = new JPanel(new GridBagLayout());
+        panelCliente.setBackground(Color.WHITE);
+        panelCliente.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "1. Datos del Cliente"));
 
-        gbc.gridx = 1; gbc.weightx = 0.4;
-        txtIdCliente = crearTextField("1", fontText);
-        panelFormulario.add(txtIdCliente, gbc);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 2; gbc.weightx = 0.1;
-        panelFormulario.add(crearLabel("ID Producto:", fontLabel), gbc);
+        gbc.gridx = 0; gbc.gridy = 0; panelCliente.add(new JLabel("NIT / DPI:"), gbc);
+        gbc.gridx = 1; txtBuscarNit = crearCampoTexto(fontText); panelCliente.add(txtBuscarNit, gbc);
 
-        gbc.gridx = 3; gbc.weightx = 0.4;
-        txtIdProducto = crearTextField("", fontText);
-        panelFormulario.add(txtIdProducto, gbc);
+        btnBuscarCliente = crearBoton("Buscar", COLOR_PRIMARY, Color.WHITE);
+        btnBuscarCliente.addActionListener(e -> buscarCliente());
+        gbc.gridx = 2; panelCliente.add(btnBuscarCliente, gbc);
 
-        // Fila 1: Nombre Producto
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.1;
-        panelFormulario.add(crearLabel("Producto:", fontLabel), gbc);
+        gbc.gridx = 0; gbc.gridy = 1; panelCliente.add(new JLabel("Nombre:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        txtNombreCliente = crearCampoTexto(fontText);
+        txtNombreCliente.setEditable(false);
+        panelCliente.add(txtNombreCliente, gbc);
 
-        gbc.gridx = 1; gbc.gridwidth = 3; gbc.weightx = 0.9;
-        txtNombreProducto = crearTextField("", fontText);
-        panelFormulario.add(txtNombreProducto, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; panelCliente.add(new JLabel("Puntos:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2;
+        txtPuntosCliente = crearCampoTexto(fontText);
+        txtPuntosCliente.setEditable(false);
+        panelCliente.add(txtPuntosCliente, gbc);
 
-        // Fila 2: Cantidad y Precio
-        gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.1;
-        panelFormulario.add(crearLabel("Cantidad:", fontLabel), gbc);
+        panelIzquierdo.add(panelCliente, BorderLayout.NORTH);
 
-        gbc.gridx = 1; gbc.weightx = 0.4;
-        txtCantidad = crearTextField("", fontText);
-        panelFormulario.add(txtCantidad, gbc);
+        // Card 2: Agregar Productos
+        JPanel panelProd = new JPanel(new GridBagLayout());
+        panelProd.setBackground(Color.WHITE);
+        panelProd.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "2. Selección de Producto / Menú"));
 
-        gbc.gridx = 2; gbc.weightx = 0.1;
-        panelFormulario.add(crearLabel("Precio (Q):", fontLabel), gbc);
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.insets = new Insets(6, 5, 6, 5);
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 3; gbc.weightx = 0.4;
-        txtPrecio = crearTextField("", fontText);
-        panelFormulario.add(txtPrecio, gbc);
+        gbc2.gridx = 0; gbc2.gridy = 0; panelProd.add(new JLabel("Ítem:"), gbc2);
+        gbc2.gridx = 1; gbc2.gridwidth = 2;
+        cbProductos = new JComboBox<>();
+        cbProductos.setFont(fontText);
+        panelProd.add(cbProductos, gbc2);
 
-        // Fila 3: Botones de Acción sobre formulario
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 4;
-        JPanel panelBotonesForm = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        panelBotonesForm.setOpaque(false);
+        gbc2.gridx = 0; gbc2.gridy = 1; gbc2.gridwidth = 1; panelProd.add(new JLabel("Cantidad:"), gbc2);
+        gbc2.gridx = 1; txtCantidad = crearCampoTexto(fontText); txtCantidad.setText("1"); panelProd.add(txtCantidad, gbc2);
 
-        btnEliminar = new JButton("Eliminar Seleccionado");
-        estilarBotonSolido(btnEliminar, BTN_ELIMINAR_BG);
+        btnAgregarItem = crearBoton("Agregar al Pedido", new Color(34, 153, 84), Color.WHITE);
+        btnAgregarItem.addActionListener(e -> agregarItem());
+        gbc2.gridx = 0; gbc2.gridy = 2; gbc2.gridwidth = 3;
+        gbc2.insets = new Insets(12, 5, 5, 5);
+        panelProd.add(btnAgregarItem, gbc2);
 
-        btnAgregar = new JButton("+ Agregar Ítem al Pedido");
-        estilarBotonSolido(btnAgregar, BTN_AGREGAR_BG);
+        panelIzquierdo.add(panelProd, BorderLayout.CENTER);
 
-        panelBotonesForm.add(btnEliminar);
-        panelBotonesForm.add(btnAgregar);
-        panelFormulario.add(panelBotonesForm, gbc);
+        add(panelIzquierdo, BorderLayout.WEST);
 
-        panelCentro.add(panelFormulario, BorderLayout.NORTH);
+        // --- Panel Derecho: Tabla y Resumen Totales ---
+        JPanel panelDerecho = new JPanel(new BorderLayout(5, 5));
+        panelDerecho.setOpaque(false);
+        panelDerecho.setBorder(new EmptyBorder(10, 5, 10, 15));
 
-        // Tabla de Detalles
-        String[] columnas = {"ID Prod.", "Descripción del Producto", "Cantidad", "Precio Unitario", "Subtotal"};
+        String[] columnas = {"Producto / Menú", "Precio Unid.", "Cantidad", "Subtotal", "Puntos"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        tblDetalles = new JTable(modeloTabla);
-        tblDetalles.setFont(fontText);
-        tblDetalles.setRowHeight(28);
-        tblDetalles.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        tblDetalles.getTableHeader().setBackground(new Color(230, 235, 242));
-        tblDetalles.getTableHeader().setForeground(COLOR_TEXT_DARK);
+        tablaDetalle = new JTable(modeloTabla);
+        tablaDetalle.setFont(fontText);
+        tablaDetalle.setRowHeight(25);
+        tablaDetalle.getTableHeader().setFont(fontLabel);
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        tblDetalles.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        tblDetalles.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+        panelDerecho.add(new JScrollPane(tablaDetalle), BorderLayout.CENTER);
 
-        JScrollPane scrollTabla = new JScrollPane(tblDetalles);
-        scrollTabla.getViewport().setBackground(Color.WHITE);
-        scrollTabla.setBorder(BorderFactory.createLineBorder(new Color(220, 224, 230), 1));
+        // Panel Inferior: Totales y Opciones de Pago
+        JPanel panelInferior = new JPanel(new BorderLayout(10, 10));
+        panelInferior.setOpaque(false);
 
-        panelCentro.add(scrollTabla, BorderLayout.CENTER);
-        add(panelCentro, BorderLayout.CENTER);
+        JPanel panelTotales = new JPanel(new GridLayout(3, 1, 5, 5));
+        panelTotales.setBackground(Color.WHITE);
+        panelTotales.setBorder(new EmptyBorder(10, 15, 10, 15));
 
-        // --- 3. PANEL INFERIOR ---
-        JPanel panelInferior = new JPanel(new BorderLayout());
-        panelInferior.setBackground(Color.WHITE);
-        panelInferior.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 224, 230)),
-                new EmptyBorder(12, 20, 12, 20)
-        ));
+        lblSubtotal = new JLabel("Subtotal: Q0.00");
+        lblSubtotal.setFont(new Font("Segoe UI", Font.BOLD, 13));
 
-        btnProcesar = new JButton("Procesar y Guardar Pedido");
-        estilarBotonSolido(btnProcesar, BTN_PROCESAR_BG);
-        btnProcesar.setPreferredSize(new Dimension(220, 42));
+        lblPuntosGanados = new JLabel("Puntos que generará la compra: +0 pts");
+        lblPuntosGanados.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblPuntosGanados.setForeground(new Color(20, 110, 180));
 
-        JPanel panelTotalCard = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        panelTotalCard.setOpaque(false);
+        lblTotal = new JLabel("TOTAL A PAGAR: Q0.00");
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTotal.setForeground(new Color(180, 40, 40));
 
-        JLabel lblEtiqTotal = new JLabel("TOTAL A PAGAR:");
-        lblEtiqTotal.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblEtiqTotal.setForeground(COLOR_TEXT_DARK);
+        panelTotales.add(lblSubtotal);
+        panelTotales.add(lblPuntosGanados);
+        panelTotales.add(lblTotal);
 
-        lblTotal = new JLabel("Q 0.00");
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTotal.setForeground(COLOR_PRIMARY);
+        JPanel panelBotonesPago = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        panelBotonesPago.setOpaque(false);
 
-        panelTotalCard.add(lblEtiqTotal);
-        panelTotalCard.add(lblTotal);
+        btnEliminarItem = crearBoton("Quitar", new Color(176, 58, 46), Color.WHITE);
+        btnEliminarItem.setPreferredSize(new Dimension(85, 36));
+        btnEliminarItem.addActionListener(e -> eliminarItem());
 
-        panelInferior.add(btnProcesar, BorderLayout.WEST);
-        panelInferior.add(panelTotalCard, BorderLayout.EAST);
+        btnCobrarEfectivo = crearBoton("Efectivo", new Color(34, 153, 84), Color.WHITE);
+        btnCobrarEfectivo.setPreferredSize(new Dimension(110, 36));
+        btnCobrarEfectivo.addActionListener(e -> cobrarEfectivo());
 
-        add(panelInferior, BorderLayout.SOUTH);
+        btnCobrarTarjeta = crearBoton("Tarjeta", new Color(40, 116, 166), Color.WHITE);
+        btnCobrarTarjeta.setPreferredSize(new Dimension(100, 36));
+        btnCobrarTarjeta.addActionListener(e -> cobrarTarjeta());
 
-        // Eventos
-        btnAgregar.addActionListener(e -> agregarProducto());
-        btnEliminar.addActionListener(e -> eliminarProductoSeleccionado());
-        btnProcesar.addActionListener(e -> procesarPedido());
+        btnCobrarMixto = crearBoton("Mixto/Dividido", new Color(142, 68, 173), Color.WHITE);
+        btnCobrarMixto.setPreferredSize(new Dimension(135, 36));
+        btnCobrarMixto.addActionListener(e -> cobrarMixto());
+
+        panelBotonesPago.add(btnEliminarItem);
+        panelBotonesPago.add(btnCobrarEfectivo);
+        panelBotonesPago.add(btnCobrarTarjeta);
+        panelBotonesPago.add(btnCobrarMixto);
+
+        panelInferior.add(panelTotales, BorderLayout.CENTER);
+        panelInferior.add(panelBotonesPago, BorderLayout.SOUTH);
+
+        panelDerecho.add(panelInferior, BorderLayout.SOUTH);
+
+        add(panelDerecho, BorderLayout.CENTER);
+
+        cargarCatalogo();
+        iniciarConsumidorFinal();
     }
 
-    private JLabel crearLabel(String texto, Font font) {
-        JLabel label = new JLabel(texto);
-        label.setFont(font);
-        label.setForeground(COLOR_TEXT_DARK);
-        return label;
+    private JTextField crearCampoTexto(Font font) {
+        JTextField field = new JTextField();
+        field.setFont(font);
+        field.setPreferredSize(new Dimension(130, 26));
+        field.setBorder(new CompoundBorder(new LineBorder(new Color(190, 195, 200), 1), new EmptyBorder(2, 6, 2, 6)));
+        return field;
     }
 
-    private JTextField crearTextField(String textoInicial, Font font) {
-        JTextField textField = new JTextField(textoInicial);
-        textField.setFont(font);
-        textField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(190, 195, 200), 1),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
-        return textField;
-    }
-
-    // Método para forzar relleno de color sólido y letras blancas perfectamente legibles
-    private void estilarBotonSolido(JButton btn, Color bgColor) {
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btn.setBackground(bgColor);
-        btn.setForeground(Color.WHITE);
+    private JButton crearBoton(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
         btn.setOpaque(true);
         btn.setContentAreaFilled(true);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setPreferredSize(new Dimension(110, 30));
+        return btn;
     }
 
-    private void agregarProducto() {
-        try {
-            if (txtIdProducto.getText().trim().isEmpty() || txtNombreProducto.getText().trim().isEmpty()
-                    || txtCantidad.getText().trim().isEmpty() || txtPrecio.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+    private void cargarCatalogo() {
+        cbProductos.removeAllItems();
+        for (ProductoIndividual p : gestionInventario.getListaProductos()) {
+            if (p.isActivo()) cbProductos.addItem(p);
+        }
+        for (MenuCompleto m : gestionInventario.getListaMenus()) {
+            if (m.isActivo()) cbProductos.addItem(m);
+        }
+    }
+
+    private void iniciarConsumidorFinal() {
+        clienteActual = gestionClientes.buscarPorNit("CF");
+        if (clienteActual != null) {
+            txtBuscarNit.setText(clienteActual.getNit());
+            txtNombreCliente.setText(clienteActual.getNombre());
+            txtPuntosCliente.setText(String.valueOf(clienteActual.getPuntos()));
+            pedidoActual = new Pedido(clienteActual);
+        }
+    }
+
+    private void buscarCliente() {
+        String nit = txtBuscarNit.getText().trim();
+        Cliente c = gestionClientes.buscarPorNit(nit);
+        if (c != null) {
+            if (!c.isActivo()) {
+                JOptionPane.showMessageDialog(this, "El cliente se encuentra desactivado.", "Aviso", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-
-            int idProd = Integer.parseInt(txtIdProducto.getText().trim());
-            String nombre = txtNombreProducto.getText().trim();
-            int cantidad = Integer.parseInt(txtCantidad.getText().trim());
-            double precio = Double.parseDouble(txtPrecio.getText().trim());
-
-            DetallePedido detalle = new DetallePedido(idProd, nombre, cantidad, precio);
-            pedidoActual.agregarDetalle(detalle);
-
-            Object[] fila = {
-                detalle.getIdProducto(),
-                detalle.getNombreProducto(),
-                detalle.getCantidad(),
-                String.format("Q %.2f", detalle.getPrecioUnitario()),
-                String.format("Q %.2f", detalle.getSubtotal())
-            };
-            modeloTabla.addRow(fila);
-
-            lblTotal.setText(String.format("Q %.2f", pedidoActual.calcularTotal()));
-
-            txtIdProducto.setText("");
-            txtNombreProducto.setText("");
-            txtCantidad.setText("");
-            txtPrecio.setText("");
-            txtIdProducto.requestFocus();
-
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Por favor ingrese valores numéricos válidos para ID, Cantidad y Precio.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void eliminarProductoSeleccionado() {
-        int filaSeleccionada = tblDetalles.getSelectedRow();
-        if (filaSeleccionada >= 0) {
-            pedidoActual.getDetalles().remove(filaSeleccionada);
-            modeloTabla.removeRow(filaSeleccionada);
-            lblTotal.setText(String.format("Q %.2f", pedidoActual.calcularTotal()));
+            clienteActual = c;
+            txtNombreCliente.setText(c.getNombre());
+            txtPuntosCliente.setText(String.valueOf(c.getPuntos()));
+            pedidoActual = new Pedido(clienteActual);
+            actualizarTabla();
         } else {
-            JOptionPane.showMessageDialog(this, "Seleccione un ítem de la tabla para eliminar.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Cliente no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void procesarPedido() {
-        if (pedidoActual.getDetalles().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "El pedido no contiene ítems para procesar.", "Pedido Vacío", JOptionPane.WARNING_MESSAGE);
+    private void agregarItem() {
+        if (clienteActual == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un cliente primero.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        JOptionPane.showMessageDialog(this, 
-            String.format("¡Pedido #%d registrado con éxito!\nTotal en Quetzales: Q %.2f\nÍtems procesados: %d", 
-                pedidoActual.getIdPedido(), pedidoActual.calcularTotal(), pedidoActual.getDetalles().size()),
-            "Confirmación de Venta", 
-            JOptionPane.INFORMATION_MESSAGE);
+        ItemVenta itemSeleccionado = (ItemVenta) cbProductos.getSelectedItem();
+        if (itemSeleccionado == null) return;
+
+        try {
+            int cant = Integer.parseInt(txtCantidad.getText().trim());
+            if (cant <= 0) {
+                JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a 0.", "Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (itemSeleccionado instanceof ProductoIndividual) {
+                ProductoIndividual p = (ProductoIndividual) itemSeleccionado;
+                if (p.getExistencia() < cant) {
+                    JOptionPane.showMessageDialog(this, "Stock insuficiente. Unidades disponibles: " + p.getExistencia(), "Inventario", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            } else if (itemSeleccionado instanceof MenuCompleto) {
+                MenuCompleto m = (MenuCompleto) itemSeleccionado;
+                if (!m.hayStockDisponible(cant)) {
+                    JOptionPane.showMessageDialog(this, "Stock insuficiente de los componentes del menú.", "Inventario", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+
+            pedidoActual.agregarDetalle(itemSeleccionado, cant);
+            actualizarTabla();
+            txtCantidad.setText("1");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Ingrese una cantidad entera válida.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void eliminarItem() {
+        int fila = tablaDetalle.getSelectedRow();
+        if (fila >= 0) {
+            pedidoActual.removerDetalle(fila);
+            actualizarTabla();
+        } else {
+            JOptionPane.showMessageDialog(this, "Seleccione un ítem de la tabla para quitar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void actualizarTabla() {
+        modeloTabla.setRowCount(0);
+        if (pedidoActual == null) return;
+
+        for (DetallePedido d : pedidoActual.getDetalles()) {
+            modeloTabla.addRow(new Object[]{
+                d.getItem().getNombre(),
+                String.format("Q%.2f", d.getItem().getPrecio()),
+                d.getCantidad(),
+                String.format("Q%.2f", d.getSubtotal()),
+                "+" + d.getPuntos() + " pts"
+            });
+        }
+
+        lblSubtotal.setText(String.format("Subtotal: Q%.2f", pedidoActual.calcularTotal()));
+        lblPuntosGanados.setText("Puntos que generará la compra: +" + pedidoActual.calcularPuntosTotales() + " pts");
+        lblTotal.setText(String.format("TOTAL A PAGAR: Q%.2f", pedidoActual.calcularTotal()));
+    }
+
+    private void cobrarEfectivo() {
+        if (!validarPedido()) return;
+
+        double total = pedidoActual.calcularTotal();
+        String input = JOptionPane.showInputDialog(this, String.format("Total a pagar: Q%.2f\nIngrese el efectivo recibido (Q):", total), "Pago en Efectivo", JOptionPane.QUESTION_MESSAGE);
+
+        if (input == null) return;
+
+        try {
+            double efectivo = Double.parseDouble(input.trim());
+            if (efectivo < total) {
+                JOptionPane.showMessageDialog(this, "Monto insuficiente. Falta Q" + String.format("%.2f", (total - efectivo)), "Pago Rechazado", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            double cambio = efectivo - total;
+            pedidoActual.setMetodoPago("EFECTIVO");
+            confirmarVenta("Pago en Efectivo procesado.\nEfectivo recibido: Q" + String.format("%.2f", efectivo) + "\nCambio entregado: Q" + String.format("%.2f", cambio));
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Ingrese un monto válido.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cobrarTarjeta() {
+        if (!validarPedido()) return;
+
+        String ref = JOptionPane.showInputDialog(this, "Ingrese el número de referencia de la tarjeta:", "Pago con Tarjeta", JOptionPane.QUESTION_MESSAGE);
+        if (ref == null || ref.trim().isEmpty()) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this, "¿La transacción con tarjeta fue APROBADA en el POS?", "Simulación POS Tarjeta", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            pedidoActual.setMetodoPago("TARJETA");
+            pedidoActual.setNumeroReferencia(ref.trim());
+            confirmarVenta("Pago con tarjeta APROBADO.\nRef: " + ref.trim());
+        } else {
+            JOptionPane.showMessageDialog(this, "Operación de pago rechazada por el banco.", "Tarjeta Rechazada", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void cobrarMixto() {
+        if (!validarPedido()) return;
+
+        double totalPedido = pedidoActual.calcularTotal();
+
+        JTextField txtEfectivo = new JTextField("0.00");
+        JTextField txtTarjeta = new JTextField("0.00");
+        JTextField txtRef = new JTextField("");
+
+        JPanel panelModal = new JPanel(new GridLayout(4, 2, 8, 8));
+        panelModal.add(new JLabel("Total del Pedido:"));
+        panelModal.add(new JLabel(String.format("Q%.2f", totalPedido)));
+        panelModal.add(new JLabel("Abono Efectivo (Q):"));
+        panelModal.add(txtEfectivo);
+        panelModal.add(new JLabel("Abono Tarjeta (Q):"));
+        panelModal.add(txtTarjeta);
+        panelModal.add(new JLabel("No. Ref. Tarjeta:"));
+        panelModal.add(txtRef);
+
+        int res = JOptionPane.showConfirmDialog(this, panelModal, "Procesar Pago Mixto / Dividido", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (res == JOptionPane.OK_OPTION) {
+            try {
+                double montoEfectivo = Double.parseDouble(txtEfectivo.getText().trim());
+                double montoTarjeta = Double.parseDouble(txtTarjeta.getText().trim());
+                String refTarjeta = txtRef.getText().trim();
+
+                double sumaPagos = montoEfectivo + montoTarjeta;
+
+                if (sumaPagos < totalPedido) {
+                    JOptionPane.showMessageDialog(this, "El pago total (Q" + String.format("%.2f", sumaPagos) + ") es menor al costo del pedido (Q" + String.format("%.2f", totalPedido) + ").", "Pago Insuficiente", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (montoTarjeta > 0 && refTarjeta.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Debe ingresar el número de referencia para el pago con tarjeta.", "Datos Faltantes", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                double cambio = (montoEfectivo + montoTarjeta) - totalPedido;
+                pedidoActual.setMetodoPago("MIXTO (Efectivo: Q" + String.format("%.2f", montoEfectivo) + " / Tarjeta: Q" + String.format("%.2f", montoTarjeta) + ")");
+                pedidoActual.setNumeroReferencia(refTarjeta.isEmpty() ? "N/A" : refTarjeta);
+
+                confirmarVenta("Pago Mixto procesado exitosamente.\n"
+                        + "• Efectivo recibido: Q" + String.format("%.2f", montoEfectivo) + "\n"
+                        + "• Tarjeta cobrada: Q" + String.format("%.2f", montoTarjeta) + " (Ref: " + refTarjeta + ")\n"
+                        + "• Cambio entregado: Q" + String.format("%.2f", cambio));
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Ingrese montos numéricos válidos en Efectivo y Tarjeta.", "Error de Formato", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private boolean validarPedido() {
+        if (pedidoActual == null || pedidoActual.getDetalles().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El pedido no tiene ítems agregados.", "Pedido Vacío", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
+    private void confirmarVenta(String mensajePago) {
+        for (DetallePedido d : pedidoActual.getDetalles()) {
+            ItemVenta item = d.getItem();
+            int cant = d.getCantidad();
+
+            if (item instanceof ProductoIndividual) {
+                ProductoIndividual p = (ProductoIndividual) item;
+                p.setExistencia(p.getExistencia() - cant);
+            } else if (item instanceof MenuCompleto) {
+                MenuCompleto m = (MenuCompleto) item;
+                m.getSandwich().setExistencia(m.getSandwich().getExistencia() - cant);
+                m.getBebida().setExistencia(m.getBebida().getExistencia() - cant);
+                m.getAcompanamiento().setExistencia(m.getAcompanamiento().getExistencia() - cant);
+            }
+        }
+
+        int puntosGanados = pedidoActual.calcularPuntosTotales();
+        clienteActual.acumularPuntos(puntosGanados);
+        pedidoActual.setEstado("PAGADO");
+
+        String comprobante = "============== COMPROBANTE DE VENTA ==============\n"
+                + "Cliente: " + clienteActual.getNombre() + " (NIT: " + clienteActual.getNit() + ")\n"
+                + "Total Pagado: Q" + String.format("%.2f", pedidoActual.calcularTotal()) + "\n"
+                + "Método de Pago: " + pedidoActual.getMetodoPago() + "\n"
+                + "Puntos Acreditados: +" + puntosGanados + " pts\n"
+                + "Saldo Total Puntos: " + clienteActual.getPuntos() + " pts\n"
+                + "==================================================";
+
+        JOptionPane.showMessageDialog(this, mensajePago + "\n\n" + comprobante, "Venta Finalizada", JOptionPane.INFORMATION_MESSAGE);
+
+        buscarCliente();
+    }
+
+    private void regresarMenu() {
+        this.dispose();
+        new FrmPrincipal(usuarioSesion).setVisible(true);
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new FrmPedidos().setVisible(true));
+        SwingUtilities.invokeLater(() -> new FrmPedidos(null).setVisible(true));
     }
 }

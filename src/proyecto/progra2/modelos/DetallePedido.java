@@ -1,34 +1,23 @@
 package proyecto.progra2.modelos;
 
 public class DetallePedido {
-    private int idProducto;
-    private String nombreProducto;
+    private ItemVenta item;
     private int cantidad;
-    private double precioUnitario;
 
-    // Constructor
-    public DetallePedido(int idProducto, String nombreProducto, int cantidad, double precioUnitario) {
-        this.idProducto = idProducto;
-        this.nombreProducto = nombreProducto;
+    public DetallePedido(ItemVenta item, int cantidad) {
+        this.item = item;
         this.cantidad = cantidad;
-        this.precioUnitario = precioUnitario;
     }
 
-    // Método para calcular el subtotal de esta línea/producto
-    public double getSubtotal() {
-        return cantidad * precioUnitario;
-    }
-
-    // Getters y Setters
-    public int getIdProducto() { return idProducto; }
-    public void setIdProducto(int idProducto) { this.idProducto = idProducto; }
-
-    public String getNombreProducto() { return nombreProducto; }
-    public void setNombreProducto(String nombreProducto) { this.nombreProducto = nombreProducto; }
-
+    public ItemVenta getItem() { return item; }
     public int getCantidad() { return cantidad; }
     public void setCantidad(int cantidad) { this.cantidad = cantidad; }
 
-    public double getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(double precioUnitario) { this.precioUnitario = precioUnitario; }
+    public double getSubtotal() {
+        return item.getPrecio() * cantidad;
+    }
+
+    public int getPuntos() {
+        return item.calcularPuntos(cantidad);
+    }
 }
