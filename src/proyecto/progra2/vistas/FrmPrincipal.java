@@ -14,7 +14,7 @@ public class FrmPrincipal extends JFrame {
 
     private Usuario usuarioActual;
 
-    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      
+    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);     
     private static final Color COLOR_ACCENT = new Color(0, 122, 255);       
     private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  
     private static final Color COLOR_TEXT_DARK = new Color(33, 37, 41);   
@@ -56,6 +56,21 @@ public class FrmPrincipal extends JFrame {
         panelInfoUser.add(Box.createRigidArea(new Dimension(0, 4)));
         panelInfoUser.add(lblUsuario);
 
+        // Panel de Botones Superiores (Acerca de + Cerrar Sesión)
+        JPanel panelBotonesHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        panelBotonesHeader.setOpaque(false);
+
+        JButton btnAbout = new JButton("Acerca de / Integrantes");
+        btnAbout.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnAbout.setBackground(new Color(70, 85, 105));
+        btnAbout.setForeground(Color.WHITE);
+        btnAbout.setFocusPainted(false);
+        btnAbout.setOpaque(true);
+        btnAbout.setContentAreaFilled(true);
+        btnAbout.setBorderPainted(false);
+        btnAbout.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnAbout.addActionListener(e -> abrirAbout());
+
         JButton btnCerrarSesion = new JButton("Cerrar Sesión");
         btnCerrarSesion.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btnCerrarSesion.setBackground(new Color(180, 40, 40));
@@ -67,8 +82,11 @@ public class FrmPrincipal extends JFrame {
         btnCerrarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
 
+        panelBotonesHeader.add(btnAbout);
+        panelBotonesHeader.add(btnCerrarSesion);
+
         panelHeader.add(panelInfoUser, BorderLayout.CENTER);
-        panelHeader.add(btnCerrarSesion, BorderLayout.EAST);
+        panelHeader.add(panelBotonesHeader, BorderLayout.EAST);
 
         add(panelHeader, BorderLayout.NORTH);
 
@@ -183,6 +201,10 @@ public class FrmPrincipal extends JFrame {
     private void abrirReportes() {
         this.dispose();
         new FrmReportes(usuarioActual).setVisible(true);
+    }
+
+    private void abrirAbout() {
+        new FrmAbout(usuarioActual).setVisible(true);
     }
 
     private void cerrarSesion() {
