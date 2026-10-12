@@ -274,9 +274,9 @@ public class FrmReportes extends JFrame {
                         if (activo) clientesActivos++;
 
                         String nivel = "Bronce";
-                        if (puntos >= 50) nivel = "Oro ⭐⭐⭐";
-                        else if (puntos >= 30) nivel = "Plata ⭐⭐";
-                        else if (puntos >= 10) nivel = "Bronce ⭐";
+                        if (puntos >= 50) nivel = "Oro ***";
+                        else if (puntos >= 30) nivel = "Plata **";
+                        else if (puntos >= 10) nivel = "Bronce *";
 
                         modeloTabla.addRow(new Object[]{
                             nit,
@@ -298,7 +298,7 @@ public class FrmReportes extends JFrame {
     private void actualizarKPI(String kpi1, String kpi2, String kpi3) {
         lblTotalVentas.setText("<html><div style='text-align: center;'><b>Métrica Principal</b><br><span style='font-size:14px; color:#229954;'>" + kpi1 + "</span></div></html>");
         lblTotalPedidos.setText("<html><div style='text-align: center;'><b>Volumen Operativo</b><br><span style='font-size:14px; color:#182B49;'>" + kpi2 + "</span></div></html>");
-        lblTotalPuntosEmitidos.setText("<html><div style='text-align: center;'><b>Programa Lealtad</b><br><span style='font-size:14px; color:#8E44AD;'>" + kpi3 + "</span></div></html>");
+        lblTotalPuntosEmitidos.setText("<html><div style='text-align: center;'><b>Puntos Totales</b><br><span style='font-size:14px; color:#8E44AD;'>" + kpi3 + "</span></div></html>");
     }
 
     private void regresarMenu() {
