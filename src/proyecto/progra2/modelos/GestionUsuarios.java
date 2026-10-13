@@ -12,8 +12,13 @@ public class GestionUsuarios {
     }
 
     public Usuario autenticar(String user, String pass) {
+        if (user == null || pass == null) return null;
+
+        // Uso de LOWER(TRIM(...)) y TRIM(PASSWORD) para evitar fallos por espacios o mayúsculas
         String sql = "SELECT USERNAME, PASSWORD, NOMBRE, ROL, ESTADO FROM USUARIOS " +
-                     "WHERE LOWER(USERNAME) = LOWER(?) AND PASSWORD = ? AND ESTADO = 1";
+                     "WHERE LOWER(TRIM(USERNAME)) = LOWER(?) " +
+                     "AND TRIM(PASSWORD) = ? " +
+                     "AND ESTADO = 1";
 
         try (Connection conn = ConexionOracle.obtenerConexion()) {
             if (conn != null) {
@@ -23,12 +28,12 @@ public class GestionUsuarios {
 
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
-                            Usuario u = new Usuario(
-                                rs.getString("USERNAME"),
-                                rs.getString("PASSWORD"),
-                                rs.getString("NOMBRE"),
-                                rs.getString("ROL")
-                            );
+                            String username = rs.getString("USERNAME") != null ? rs.getString("USERNAME").trim() : "";
+                            String password = rs.getString("PASSWORD") != null ? rs.getString("PASSWORD").trim() : "";
+                            String nombre   = rs.getString("NOMBRE") != null ? rs.getString("NOMBRE").trim() : "";
+                            String rol      = rs.getString("ROL") != null ? rs.getString("ROL").trim() : "";
+
+                            Usuario u = new Usuario(username, password, nombre, rol);
                             u.setActivo(rs.getInt("ESTADO") == 1);
                             return u;
                         }
@@ -42,7 +47,7 @@ public class GestionUsuarios {
     }
 
     public boolean agregarUsuario(Usuario u) {
-        if (buscarPorUsername(u.getUsername()) != null) return false;
+        if (u == null || buscarPorUsername(u.getUsername()) != null) return false;
 
         String sql = "INSERT INTO USUARIOS (ID_USUARIO, USERNAME, PASSWORD, NOMBRE, ROL, ESTADO) " +
                      "VALUES (SEQ_USUARIOS.NEXTVAL, ?, ?, ?, ?, ?)";
@@ -68,7 +73,9 @@ public class GestionUsuarios {
     }
 
     public boolean editarUsuario(String usernameOriginal, String nuevoNombre, String nuevoRol) {
-        String sql = "UPDATE USUARIOS SET NOMBRE = ?, ROL = ? WHERE LOWER(USERNAME) = LOWER(?)";
+        if (usernameOriginal == null) return false;
+
+        String sql = "UPDATE USUARIOS SET NOMBRE = ?, ROL = ? WHERE LOWER(TRIM(USERNAME)) = LOWER(?)";
 
         try (Connection conn = ConexionOracle.obtenerConexion()) {
             if (conn != null) {
@@ -89,7 +96,9 @@ public class GestionUsuarios {
     }
 
     public boolean cambiarPassword(String username, String nuevaPassword) {
-        String sql = "UPDATE USUARIOS SET PASSWORD = ? WHERE LOWER(USERNAME) = LOWER(?)";
+        if (username == null || nuevaPassword == null) return false;
+
+        String sql = "UPDATE USUARIOS SET PASSWORD = ? WHERE LOWER(TRIM(USERNAME)) = LOWER(?)";
 
         try (Connection conn = ConexionOracle.obtenerConexion()) {
             if (conn != null) {
@@ -109,8 +118,10 @@ public class GestionUsuarios {
     }
 
     public boolean cambiarEstadoUsuario(String username) {
+        if (username == null) return false;
+
         String sql = "UPDATE USUARIOS SET ESTADO = CASE WHEN ESTADO = 1 THEN 0 ELSE 1 END " +
-                     "WHERE LOWER(USERNAME) = LOWER(?)";
+                     "WHERE LOWER(TRIM(USERNAME)) = LOWER(?)";
 
         try (Connection conn = ConexionOracle.obtenerConexion()) {
             if (conn != null) {
@@ -132,7 +143,7 @@ public class GestionUsuarios {
         if (username == null || username.trim().isEmpty()) return null;
 
         String sql = "SELECT USERNAME, PASSWORD, NOMBRE, ROL, ESTADO FROM USUARIOS " +
-                     "WHERE LOWER(USERNAME) = LOWER(?)";
+                     "WHERE LOWER(TRIM(USERNAME)) = LOWER(?)";
 
         try (Connection conn = ConexionOracle.obtenerConexion()) {
             if (conn != null) {
@@ -141,12 +152,12 @@ public class GestionUsuarios {
 
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
-                            Usuario u = new Usuario(
-                                rs.getString("USERNAME"),
-                                rs.getString("PASSWORD"),
-                                rs.getString("NOMBRE"),
-                                rs.getString("ROL")
-                            );
+                            String uUser = rs.getString("USERNAME") != null ? rs.getString("USERNAME").trim() : "";
+                            String uPass = rs.getString("PASSWORD") != null ? rs.getString("PASSWORD").trim() : "";
+                            String uNom  = rs.getString("NOMBRE") != null ? rs.getString("NOMBRE").trim() : "";
+                            String uRol  = rs.getString("ROL") != null ? rs.getString("ROL").trim() : "";
+
+                            Usuario u = new Usuario(uUser, uPass, uNom, uRol);
                             u.setActivo(rs.getInt("ESTADO") == 1);
                             return u;
                         }
@@ -169,12 +180,12 @@ public class GestionUsuarios {
                      ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
-                        Usuario u = new Usuario(
-                            rs.getString("USERNAME"),
-                            rs.getString("PASSWORD"),
-                            rs.getString("NOMBRE"),
-                            rs.getString("ROL")
-                        );
+                        String uUser = rs.getString("USERNAME") != null ? rs.getString("USERNAME").trim() : "";
+                        String uPass = rs.getString("PASSWORD") != null ? rs.getString("PASSWORD").trim() : "";
+                        String uNom  = rs.getString("NOMBRE") != null ? rs.getString("NOMBRE").trim() : "";
+                        String uRol  = rs.getString("ROL") != null ? rs.getString("ROL").trim() : "";
+
+                        Usuario u = new Usuario(uUser, uPass, uNom, uRol);
                         u.setActivo(rs.getInt("ESTADO") == 1);
                         lista.add(u);
                     }

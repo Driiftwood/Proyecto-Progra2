@@ -88,10 +88,11 @@ public class FrmAbout extends JFrame {
         
         // MODIFICA LOS DATOS DE ESTA TABLA CON LA INFORMACIÓN REAL DE TU GRUPO:
         Object[][] datos = {
-            {"2023-00001", "Nombre Integrante 1", "Líder / Backend", "Diseño de Base de Datos Oracle XE, JDBC y Servidor API HTTP (Puerto 80)."},
-            {"2023-00002", "Nombre Integrante 2", "Desarrollador Android", "App Móvil Material Design 3, consumo Volley JSON y generación de cupones."},
-            {"2023-00003", "Nombre Integrante 3", "Desarrollador Desktop POS", "Módulo de Ventas FrmPedidos, validación de cupones de canje y reportes."},
-            {"2023-00004", "Nombre Integrante 4", "QA / Modelos", "Clases de modelo (Cliente, Pedido, Inventario) y pruebas de integración."}
+            {"5190-12-242", "Franklin Alexander Mejía Donis", "Líder / Full-Stack", "Módulos Usuarios, Pedidos y Cobros, Diseño, Base de Datos, Aplicativo Android, CiberSeguridad"},
+            {"3190-24-1950", "Natalia Galicia", "Desarrollador Desktop POS", "Módulo de Inventario y Reportes"},
+            {"7690-25-15213", "Gerver Alejandro Morales Toledo", "Desarrollador Desktop POS", "Módulo de Clientes y Fidelizacion"},
+            {"1390-25-5611", "Diego Rolando Padilla Espino", "Desarrollador Desktop POS", "Módulo Principal, Unificación de Módulos"},
+            {"1390-25-5606", "José Eduardo Ramírez Cruz", "QA / Documentación", "Pruebas Piloto, Detección de Errores, Documentación y Diseño"}
         };
 
         DefaultTableModel model = new DefaultTableModel(datos, columnas) {
