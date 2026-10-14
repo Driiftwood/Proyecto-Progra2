@@ -19,8 +19,6 @@ public abstract class ItemVenta {
 
     public double getPrecio() { return precio; }
     public void setPrecio(double precio) { this.precio = precio; }
-
-    // Método polimórfico obligatorio
     public abstract int calcularPuntos(int cantidad);
 
     @Override

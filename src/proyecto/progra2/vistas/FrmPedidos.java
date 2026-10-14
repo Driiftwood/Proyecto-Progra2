@@ -53,7 +53,6 @@ public class FrmPedidos extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(12, 12));
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -83,7 +82,6 @@ public class FrmPedidos extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Izquierdo ---
         JPanel panelIzquierdo = new JPanel(new BorderLayout(0, 10));
         panelIzquierdo.setOpaque(false);
         panelIzquierdo.setPreferredSize(new Dimension(420, 0));
@@ -96,7 +94,6 @@ public class FrmPedidos extends JFrame {
         panelCards.setLayout(new BoxLayout(panelCards, BoxLayout.Y_AXIS));
         panelCards.setOpaque(false);
 
-        // Card 1: Cliente
         JPanel panelCliente = new JPanel(new GridBagLayout());
         panelCliente.setBackground(Color.WHITE);
         panelCliente.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "1. Datos del Cliente", 0, 0, fontLabel, COLOR_PRIMARY));
@@ -127,7 +124,6 @@ public class FrmPedidos extends JFrame {
         panelCards.add(panelCliente);
         panelCards.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Card 2: Validar Cupón App Móvil
         JPanel panelCupon = new JPanel(new GridBagLayout());
         panelCupon.setBackground(Color.WHITE);
         panelCupon.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "2. Validar Cupón App Móvil", 0, 0, fontLabel, COLOR_PRIMARY));
@@ -152,7 +148,6 @@ public class FrmPedidos extends JFrame {
         panelCards.add(panelCupon);
         panelCards.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Card 3: Productos
         JPanel panelProd = new JPanel(new GridBagLayout());
         panelProd.setBackground(Color.WHITE);
         panelProd.setBorder(BorderFactory.createTitledBorder(new LineBorder(new Color(200, 205, 210), 1), "3. Selección de Producto / Menú", 0, 0, fontLabel, COLOR_PRIMARY));
@@ -190,7 +185,6 @@ public class FrmPedidos extends JFrame {
         panelIzquierdo.add(panelCards, BorderLayout.NORTH);
         add(panelIzquierdo, BorderLayout.WEST);
 
-        // --- Panel Derecho: Tabla y Resumen Totales ---
         JPanel panelDerecho = new JPanel(new BorderLayout(8, 8));
         panelDerecho.setOpaque(false);
         panelDerecho.setBorder(new EmptyBorder(10, 5, 10, 15));
@@ -207,7 +201,6 @@ public class FrmPedidos extends JFrame {
 
         panelDerecho.add(new JScrollPane(tablaDetalle), BorderLayout.CENTER);
 
-        // Panel Inferior: Totales
         JPanel panelInferior = new JPanel(new BorderLayout(10, 10));
         panelInferior.setOpaque(false);
 
@@ -533,7 +526,6 @@ public class FrmPedidos extends JFrame {
         return true;
     }
 
-    // REGISTRO DE VENTA, DETALLES Y PUNTOS EN BASE DE DATOS ORACLE XE
     private void confirmarVenta(String mensajePago) {
         double totalFinal = cuponAplicado ? 0.00 : pedidoActual.calcularTotal();
         int puntosGanados = cuponAplicado ? 0 : pedidoActual.calcularPuntosTotales();
@@ -541,7 +533,6 @@ public class FrmPedidos extends JFrame {
         int idPedidoGenerado = guardarPedidoEnOracle(totalFinal, puntosGanados);
 
         if (idPedidoGenerado > 0) {
-            // Guardar detalles y descontar inventarios
             for (DetallePedido d : pedidoActual.getDetalles()) {
                 ItemVenta item = d.getItem();
                 int cant = d.getCantidad();
@@ -557,7 +548,6 @@ public class FrmPedidos extends JFrame {
                 }
             }
 
-            // Actualizar Puntos del Cliente en Oracle XE
             if (puntosGanados > 0 && clienteActual != null) {
                 actualizarPuntosClienteEnOracle(clienteActual.getNit(), puntosGanados);
                 clienteActual.acumularPuntos(puntosGanados);

@@ -46,7 +46,6 @@ public class FrmClientes extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(10, 10));
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -76,7 +75,6 @@ public class FrmClientes extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Izquierdo: Formulario ---
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setOpaque(false);
         panelForm.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -125,7 +123,6 @@ public class FrmClientes extends JFrame {
 
         add(panelForm, BorderLayout.WEST);
 
-        // --- Panel Derecho: Tabla ---
         JPanel panelTabla = new JPanel(new BorderLayout(5, 5));
         panelTabla.setOpaque(false);
         panelTabla.setBorder(new EmptyBorder(15, 5, 15, 15));
@@ -238,7 +235,6 @@ public class FrmClientes extends JFrame {
             return;
         }
 
-        // Si la sesión activa es de un Cajero, exige clave de Administrador
         if (usuarioSesion != null && "Cajero".equalsIgnoreCase(usuarioSesion.getRol())) {
             if (!DialogAutorizacion.solicitarAutorizacion(this)) return;
         }
@@ -262,7 +258,6 @@ public class FrmClientes extends JFrame {
             return;
         }
 
-        // Si la sesión activa es de un Cajero, exige clave de Administrador
         if (usuarioSesion != null && "Cajero".equalsIgnoreCase(usuarioSesion.getRol())) {
             if (!DialogAutorizacion.solicitarAutorizacion(this)) return;
         }

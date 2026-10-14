@@ -10,10 +10,8 @@ import proyecto.progra2.conexion.ConexionOracle;
 public class GestionClientes {
 
     public GestionClientes() {
-        // Gestión directa desde Oracle XE
     }
 
-    // 1. Agregar cliente directamente en Oracle XE
     public boolean agregarCliente(Cliente cliente) {
         if (buscarPorNit(cliente.getNit()) != null) {
             return false;
@@ -40,7 +38,6 @@ public class GestionClientes {
         return false;
     }
 
-    // 2. Editar cliente en Oracle XE
     public boolean editarCliente(String nitOriginal, String nuevoNombre, String nuevaDireccion, String nuevoTelefono) {
         String sql = "UPDATE CLIENTES SET NOMBRE = ? WHERE UPPER(NIT) = UPPER(?)";
 
@@ -60,8 +57,6 @@ public class GestionClientes {
         }
         return false;
     }
-
-    // 3. Cambiar Estado en Oracle XE
     public boolean cambiarEstadoCliente(String nit) {
         String sql = "UPDATE CLIENTES SET ESTADO = CASE WHEN ESTADO = 1 THEN 0 ELSE 1 END WHERE UPPER(NIT) = UPPER(?)";
 
@@ -80,8 +75,6 @@ public class GestionClientes {
         }
         return false;
     }
-
-    // 4. Buscar por NIT desde Oracle XE
     public Cliente buscarPorNit(String nit) {
         if (nit == null || nit.trim().isEmpty()) return null;
 
@@ -112,8 +105,6 @@ public class GestionClientes {
 
         return null;
     }
-
-    // 5. Descontar Puntos directamente en Oracle XE con COMMIT
     public boolean descontarPuntos(String nit, int puntosADescontar) {
         if (nit == null || nit.trim().isEmpty()) return false;
 
@@ -137,8 +128,6 @@ public class GestionClientes {
 
         return false;
     }
-
-    // 6. Obtener lista completa directamente desde Oracle XE
     public List<Cliente> getListaClientes() {
         List<Cliente> lista = new ArrayList<>();
         String sql = "SELECT NIT, NOMBRE, PUNTOS, ESTADO FROM CLIENTES ORDER BY NIT ASC";

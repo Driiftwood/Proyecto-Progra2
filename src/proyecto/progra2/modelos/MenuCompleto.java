@@ -21,8 +21,6 @@ public class MenuCompleto extends ItemVenta {
 
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
-
-    // Verifica si hay existencias suficientes de sus 3 componentes
     public boolean hayStockDisponible(int cantidad) {
         return sandwich.getExistencia() >= cantidad &&
                bebida.getExistencia() >= cantidad &&

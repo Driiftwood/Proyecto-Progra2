@@ -8,13 +8,11 @@ import proyecto.progra2.conexion.ConexionOracle;
 public class GestionUsuarios {
 
     public GestionUsuarios() {
-        // Se gestiona dinámicamente mediante consultas a Oracle XE
     }
 
     public Usuario autenticar(String user, String pass) {
         if (user == null || pass == null) return null;
 
-        // Uso de LOWER(TRIM(...)) y TRIM(PASSWORD) para evitar fallos por espacios o mayúsculas
         String sql = "SELECT USERNAME, PASSWORD, NOMBRE, ROL, ESTADO FROM USUARIOS " +
                      "WHERE LOWER(TRIM(USERNAME)) = LOWER(?) " +
                      "AND TRIM(PASSWORD) = ? " +

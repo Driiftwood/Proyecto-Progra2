@@ -41,7 +41,6 @@ public class FrmReportes extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(10, 10));
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -71,7 +70,6 @@ public class FrmReportes extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Superior ---
         JPanel panelControles = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
         panelControles.setBackground(Color.WHITE);
         panelControles.setBorder(new CompoundBorder(new LineBorder(new Color(210, 215, 220), 1), new EmptyBorder(8, 12, 8, 12)));
@@ -92,7 +90,6 @@ public class FrmReportes extends JFrame {
         panelControles.add(btnReporteMasVendidos);
         panelControles.add(btnReporteFidelizacion);
 
-        // --- Panel Central: Tabla ---
         modeloTabla = new DefaultTableModel() {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -110,7 +107,6 @@ public class FrmReportes extends JFrame {
 
         add(panelCentro, BorderLayout.CENTER);
 
-        // --- Panel Inferior ---
         JPanel panelInferior = new JPanel(new GridLayout(1, 3, 15, 0));
         panelInferior.setOpaque(false);
         panelInferior.setBorder(new EmptyBorder(5, 15, 15, 15));
@@ -125,7 +121,6 @@ public class FrmReportes extends JFrame {
 
         add(panelInferior, BorderLayout.SOUTH);
 
-        // Cargar por defecto ventas desde Oracle XE
         cargarReporteVentas();
     }
 
@@ -152,7 +147,6 @@ public class FrmReportes extends JFrame {
         return btn;
     }
 
-    // --- REPORTE 1: HISTORIAL DE VENTAS ---
     private void cargarReporteVentas() {
         modeloTabla.setRowCount(0);
         String[] columnas = {"ID Pedido", "NIT Cliente", "Nombre Cliente", "Fecha / Hora", "Método Pago", "Total (Q)", "Puntos Ganados"};
@@ -203,7 +197,6 @@ public class FrmReportes extends JFrame {
         actualizarKPI("Q" + String.format("%.2f", sumaTotal), contadorPedidos + " pedidos", sumaPuntos + " pts emitidos");
     }
 
-    // --- REPORTE 2: PRODUCTOS MÁS VENDIDOS ---
     private void cargarReporteMasVendidos() {
         modeloTabla.setRowCount(0);
         String[] columnas = {"ID Producto", "Nombre Producto", "Categoría", "Unidades Vendidas", "Total Recaudado (Q)"};
@@ -248,7 +241,6 @@ public class FrmReportes extends JFrame {
         actualizarKPI("Q" + String.format("%.2f", sumaTotal), totalUnidades + " unidades vendidas", "Categorías en Oracle XE");
     }
 
-    // --- REPORTE 3: FIDELIZACIÓN (LECTURA FRESCA Y REAL DE PUNTOS) ---
     private void cargarReporteFidelizacion() {
         modeloTabla.setRowCount(0);
         String[] columnas = {"NIT / DPI", "Nombre Cliente", "Puntos Acumulados", "Estado", "Nivel Fidelidad"};

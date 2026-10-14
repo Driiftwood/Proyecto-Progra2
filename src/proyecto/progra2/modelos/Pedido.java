@@ -47,8 +47,6 @@ public class Pedido {
         }
         return puntos;
     }
-
-    // Getters y Setters
     public int getIdPedido() { return idPedido; }
     public Cliente getCliente() { return cliente; }
     public List<DetallePedido> getDetalles() { return detalles; }

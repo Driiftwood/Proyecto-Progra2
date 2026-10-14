@@ -29,7 +29,6 @@ public class FrmAbout extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(10, 10));
 
-        // --- HEADER / ENCABEZADO ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -63,12 +62,10 @@ public class FrmAbout extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- CONTENIDO PRINCIPAL ---
         JPanel panelCenter = new JPanel(new BorderLayout(10, 10));
         panelCenter.setOpaque(false);
         panelCenter.setBorder(new EmptyBorder(10, 20, 15, 20));
 
-        // Card superior: Info General
         JPanel panelInfoGeneral = new JPanel(new GridLayout(2, 2, 10, 5));
         panelInfoGeneral.setBackground(Color.WHITE);
         panelInfoGeneral.setBorder(new CompoundBorder(
@@ -83,10 +80,8 @@ public class FrmAbout extends JFrame {
 
         panelCenter.add(panelInfoGeneral, BorderLayout.NORTH);
 
-        // Tabla de Integrantes y Distribución del Trabajo
         String[] columnas = {"No. Carné", "Nombre Completo", "Rol / Módulo", "Aportes Realizados"};
         
-        // MODIFICA LOS DATOS DE ESTA TABLA CON LA INFORMACIÓN REAL DE TU GRUPO:
         Object[][] datos = {
             {"5190-12-242", "Franklin Alexander Mejía Donis", "Líder / Full-Stack", "Módulos Usuarios, Pedidos y Cobros, Diseño, Base de Datos, Aplicativo Android, CiberSeguridad"},
             {"3190-24-1950", "Natalia Galicia", "Desarrollador Desktop POS", "Módulo de Inventario y Reportes"},
@@ -105,7 +100,6 @@ public class FrmAbout extends JFrame {
         tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         tabla.getTableHeader().setBackground(new Color(230, 235, 242));
 
-        // Ajustar anchos de columnas
         tabla.getColumnModel().getColumn(0).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(1).setPreferredWidth(180);
         tabla.getColumnModel().getColumn(2).setPreferredWidth(150);

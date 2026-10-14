@@ -1,7 +1,7 @@
 package proyecto.progra2.modelos;
 
 public class Cliente {
-    private String nit; // Identificador único / NIT / DPI
+    private String nit; 
     private String nombre;
     private String direccion;
     private String telefono;
@@ -13,11 +13,10 @@ public class Cliente {
         this.nombre = nombre;
         this.direccion = direccion;
         this.telefono = telefono;
-        this.puntos = 0; // Saldo inicial siempre es 0
+        this.puntos = 0; 
         this.activo = true;
     }
 
-    // Getters y Setters
     public String getNit() { return nit; }
     public void setNit(String nit) { this.nit = nit; }
 
@@ -35,8 +34,6 @@ public class Cliente {
 
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
-
-    // Gestión de Puntos
     public void acumularPuntos(int cantidad) {
         if (cantidad > 0) {
             this.puntos += cantidad;

@@ -30,12 +30,10 @@ public class FrmUsuarios extends JFrame {
     private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  
     private static final Color COLOR_TEXT_DARK = new Color(33, 37, 41);   
 
-    // Constructor predeterminado
     public FrmUsuarios() {
         this(null);
     }
 
-    // Constructor con sesión de usuario activa
     public FrmUsuarios(Usuario usuario) {
         this.usuarioSesion = usuario;
         this.gestionUsuarios = new GestionUsuarios();
@@ -49,7 +47,6 @@ public class FrmUsuarios extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(10, 10));
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -79,7 +76,6 @@ public class FrmUsuarios extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Izquierdo: Formulario ---
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setOpaque(false);
         panelForm.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -91,21 +87,18 @@ public class FrmUsuarios extends JFrame {
         Font fontLabel = new Font("Segoe UI", Font.BOLD, 12);
         Font fontText = new Font("Segoe UI", Font.PLAIN, 12);
 
-        // Usuario
         gbc.gridx = 0; gbc.gridy = 0; panelForm.add(new JLabel("Usuario:"), gbc);
         gbc.gridx = 1; txtUser = new JTextField(); txtUser.setFont(fontText);
         txtUser.setPreferredSize(new Dimension(160, 28));
         txtUser.setBorder(new CompoundBorder(new LineBorder(new Color(190, 195, 200), 1), new EmptyBorder(2, 6, 2, 6)));
         panelForm.add(txtUser, gbc);
 
-        // Nombre
         gbc.gridx = 0; gbc.gridy = 1; panelForm.add(new JLabel("Nombre:"), gbc);
         gbc.gridx = 1; txtNombre = new JTextField(); txtNombre.setFont(fontText);
         txtNombre.setPreferredSize(new Dimension(160, 28));
         txtNombre.setBorder(new CompoundBorder(new LineBorder(new Color(190, 195, 200), 1), new EmptyBorder(2, 6, 2, 6)));
         panelForm.add(txtNombre, gbc);
 
-        // Password + Ver Password
         gbc.gridx = 0; gbc.gridy = 2; panelForm.add(new JLabel("Contraseña:"), gbc);
 
         JPanel panelPassContainer = new JPanel(new BorderLayout(4, 0));
@@ -124,14 +117,12 @@ public class FrmUsuarios extends JFrame {
 
         gbc.gridx = 1; panelForm.add(panelPassContainer, gbc);
 
-        // Rol
         gbc.gridx = 0; gbc.gridy = 3; panelForm.add(new JLabel("Rol:"), gbc);
         gbc.gridx = 1; 
         cbRol = new JComboBox<>(new String[]{"Administrador", "Cajero"});
         cbRol.setFont(fontText);
         panelForm.add(cbRol, gbc);
 
-        // Grid Botones Formulario
         JPanel panelAcciones = new JPanel(new GridLayout(2, 2, 6, 6));
         panelAcciones.setOpaque(false);
 
@@ -149,7 +140,6 @@ public class FrmUsuarios extends JFrame {
         gbc.insets = new Insets(12, 6, 6, 6);
         panelForm.add(panelAcciones, gbc);
 
-        // Botón Cambiar Contraseña
         btnCambiarPass = crearBoton("Cambiar Contraseña", new Color(142, 68, 173), Color.WHITE);
         btnCambiarPass.setPreferredSize(new Dimension(180, 32));
         btnCambiarPass.addActionListener(e -> cambiarPassword());
@@ -160,7 +150,6 @@ public class FrmUsuarios extends JFrame {
 
         add(panelForm, BorderLayout.WEST);
 
-        // --- Panel Derecho: Tabla ---
         JPanel panelTabla = new JPanel(new BorderLayout(5, 5));
         panelTabla.setOpaque(false);
         panelTabla.setBorder(new EmptyBorder(15, 5, 15, 15));
@@ -182,7 +171,6 @@ public class FrmUsuarios extends JFrame {
         panelTabla.add(new JScrollPane(tablaUsuarios), BorderLayout.CENTER);
         add(panelTabla, BorderLayout.CENTER);
 
-        // Listeners
         btnGuardar.addActionListener(e -> guardarUsuario());
         btnEditar.addActionListener(e -> editarUsuario());
         btnEstado.addActionListener(e -> alternarEstadoUsuario());

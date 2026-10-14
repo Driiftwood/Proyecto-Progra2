@@ -14,8 +14,6 @@ public class Producto {
         this.stock = stock;
         this.precio = precio;
     }
-
-    // Getters y Setters
     public int getIdProducto() { return idProducto; }
     public void setIdProducto(int idProducto) { this.idProducto = idProducto; }
 

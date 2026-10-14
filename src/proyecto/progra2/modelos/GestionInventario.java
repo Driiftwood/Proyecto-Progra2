@@ -10,10 +10,8 @@ import proyecto.progra2.conexion.ConexionOracle;
 public class GestionInventario {
 
     public GestionInventario() {
-        // Se gestiona el inventario directamente con consultas a Oracle XE
     }
 
-    // 1. Agregar producto individual o combo a Oracle XE
     public boolean agregarProducto(ProductoIndividual producto) {
         String sql = "INSERT INTO PRODUCTOS (ID_PRODUCTO, NOMBRE, CATEGORIA, PRECIO, EXISTENCIA, ESTADO) " +
                      "VALUES (SEQ_PRODUCTOS.NEXTVAL, ?, ?, ?, ?, 1)";
@@ -37,7 +35,6 @@ public class GestionInventario {
         return false;
     }
 
-    // 2. Editar producto en Oracle XE
     public boolean editarProducto(String codigoOriginal, String nuevoNombre, String nuevaCategoria, double nuevoPrecio) {
         String sql = "UPDATE PRODUCTOS SET NOMBRE = ?, CATEGORIA = ?, PRECIO = ? WHERE ID_PRODUCTO = ?";
 
@@ -60,7 +57,6 @@ public class GestionInventario {
         return false;
     }
 
-    // 3. Eliminar (desactivar) producto en Oracle XE
     public boolean eliminarProducto(String codigo) {
         String sql = "UPDATE PRODUCTOS SET ESTADO = 0 WHERE ID_PRODUCTO = ?";
 
@@ -79,8 +75,6 @@ public class GestionInventario {
         }
         return false;
     }
-
-    // 4. Abastecer o descontar existencia de un producto específico
     public boolean abastecerInventario(String codigo, int cantidadIngreso) {
         String sql = "UPDATE PRODUCTOS SET EXISTENCIA = EXISTENCIA + ? WHERE ID_PRODUCTO = ?";
 
@@ -100,8 +94,6 @@ public class GestionInventario {
         }
         return false;
     }
-
-    // 5. Buscar producto por ID/Código
     public ProductoIndividual buscarProducto(String codigo) {
         if (codigo == null || codigo.trim().isEmpty()) return null;
 
@@ -132,8 +124,6 @@ public class GestionInventario {
         }
         return null;
     }
-
-    // 6. Obtener lista completa de productos individuales
     public List<ProductoIndividual> getListaProductos() {
         List<ProductoIndividual> lista = new ArrayList<>();
         String sql = "SELECT ID_PRODUCTO, NOMBRE, CATEGORIA, PRECIO, EXISTENCIA FROM PRODUCTOS " +
@@ -161,8 +151,6 @@ public class GestionInventario {
         }
         return lista;
     }
-
-    // 7. Obtener lista de Menús Completo/Combos
     public List<MenuCompleto> getListaMenus() {
         List<MenuCompleto> lista = new ArrayList<>();
         String sql = "SELECT ID_PRODUCTO, NOMBRE, PRECIO FROM PRODUCTOS WHERE CATEGORIA = 'Combo' AND ESTADO = 1";
@@ -177,8 +165,6 @@ public class GestionInventario {
                         String codigo = "M" + String.format("%02d", id);
                         String nombre = rs.getString("NOMBRE");
                         double precio = rs.getDouble("PRECIO");
-
-                        // Se crea el combo usando referencias genéricas del inventario
                         ProductoIndividual pSandwich = obtenerPrimerProductoPorCategoria("Sandwich");
                         ProductoIndividual pBebida = obtenerPrimerProductoPorCategoria("Bebida");
                         ProductoIndividual pPapas = obtenerPrimerProductoPorCategoria("Acompanamiento");

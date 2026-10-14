@@ -24,7 +24,6 @@ public class FrmLogin extends JFrame {
     private static final Color COLOR_TEXT_DARK = new Color(33, 37, 41);
 
     public FrmLogin() {
-        // --- Iniciar Servidor API HTTP para la App Android ---
         new Thread(ServidorApi::iniciarServidor).start();
 
         gestionUsuarios = new GestionUsuarios();
@@ -39,7 +38,6 @@ public class FrmLogin extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout());
 
-        // --- Header ---
         JPanel panelHeader = new JPanel();
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setLayout(new BoxLayout(panelHeader, BoxLayout.Y_AXIS));
@@ -61,7 +59,6 @@ public class FrmLogin extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Formulario ---
         JPanel panelForm = new JPanel(new GridBagLayout());
         panelForm.setOpaque(false);
         panelForm.setBorder(new EmptyBorder(20, 30, 20, 30));
@@ -73,7 +70,6 @@ public class FrmLogin extends JFrame {
         Font fontLabel = new Font("Segoe UI", Font.BOLD, 12);
         Font fontText = new Font("Segoe UI", Font.PLAIN, 13);
 
-        // Usuario
         gbc.gridx = 0; gbc.gridy = 0;
         JLabel lblUser = new JLabel("Usuario:");
         lblUser.setFont(fontLabel);
@@ -86,7 +82,6 @@ public class FrmLogin extends JFrame {
         txtUsuario.setBorder(new CompoundBorder(new LineBorder(new Color(190, 195, 200), 1), new EmptyBorder(2, 8, 2, 8)));
         panelForm.add(txtUsuario, gbc);
 
-        // Contraseña + Botón Ver
         gbc.gridx = 0; gbc.gridy = 2;
         JLabel lblPass = new JLabel("Contraseña:");
         lblPass.setFont(fontLabel);
@@ -116,7 +111,6 @@ public class FrmLogin extends JFrame {
 
         panelForm.add(panelPass, gbc);
 
-        // Botón Ingresar
         gbc.gridx = 0; gbc.gridy = 4;
         gbc.insets = new Insets(20, 5, 8, 5);
         btnIngresar = new JButton("Iniciar Sesión");
@@ -133,7 +127,6 @@ public class FrmLogin extends JFrame {
 
         panelForm.add(btnIngresar, gbc);
 
-        // Botón Salir
         gbc.gridx = 0; gbc.gridy = 5;
         gbc.insets = new Insets(4, 5, 5, 5);
         btnSalir = new JButton("Salir");
@@ -152,7 +145,6 @@ public class FrmLogin extends JFrame {
 
         add(panelForm, BorderLayout.CENTER);
 
-        // Enter key shortcut
         getRootPane().setDefaultButton(btnIngresar);
     }
 
@@ -171,7 +163,6 @@ public class FrmLogin extends JFrame {
             JOptionPane.showMessageDialog(this, "¡Bienvenido/a " + usuarioLogueado.getNombre() + "!\nRol: " + usuarioLogueado.getRol(), "Acceso Concedido", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
             
-            // Pasa el objeto del usuario logueado al FrmPrincipal
             new FrmPrincipal(usuarioLogueado).setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos, o la cuenta está inactiva.", "Acceso Denegado", JOptionPane.ERROR_MESSAGE);

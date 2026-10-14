@@ -31,7 +31,6 @@ public class FrmPrincipal extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout());
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(18, 25, 18, 25));
@@ -56,7 +55,6 @@ public class FrmPrincipal extends JFrame {
         panelInfoUser.add(Box.createRigidArea(new Dimension(0, 4)));
         panelInfoUser.add(lblUsuario);
 
-        // Panel de Botones Superiores (Acerca de + Cerrar Sesión)
         JPanel panelBotonesHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panelBotonesHeader.setOpaque(false);
 
@@ -90,7 +88,6 @@ public class FrmPrincipal extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Grid de 6 Módulos ---
         JPanel panelGrid = new JPanel(new GridLayout(2, 3, 18, 18));
         panelGrid.setOpaque(false);
         panelGrid.setBorder(new EmptyBorder(25, 30, 25, 30));
@@ -104,7 +101,6 @@ public class FrmPrincipal extends JFrame {
 
         add(panelGrid, BorderLayout.CENTER);
 
-        // --- Footer ---
         JPanel panelFooter = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelFooter.setOpaque(false);
         panelFooter.setBorder(new EmptyBorder(10, 10, 15, 10));

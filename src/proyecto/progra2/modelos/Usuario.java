@@ -4,7 +4,7 @@ public class Usuario {
     private String username;
     private String password;
     private String nombre;
-    private String rol; // "Administrador", "Cajero"
+    private String rol;
     private boolean activo;
 
     public Usuario(String username, String password, String nombre, String rol) {

@@ -42,7 +42,6 @@ public class FrmCanjePuntos extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(10, 10));
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -72,7 +71,6 @@ public class FrmCanjePuntos extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Formulario Central ---
         JPanel panelCentral = new JPanel(new GridBagLayout());
         panelCentral.setBackground(Color.WHITE);
         panelCentral.setBorder(new CompoundBorder(new EmptyBorder(15, 20, 15, 20), new LineBorder(new Color(210, 215, 220), 1)));
@@ -84,7 +82,6 @@ public class FrmCanjePuntos extends JFrame {
         gbc.insets = new Insets(8, 10, 8, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // NIT
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.0;
         panelCentral.add(new JLabel("NIT / DPI Cliente:"), gbc);
 
@@ -97,7 +94,6 @@ public class FrmCanjePuntos extends JFrame {
         gbc.gridx = 2; gbc.weightx = 0.0;
         panelCentral.add(btnBuscar, gbc);
 
-        // Nombre
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0;
         panelCentral.add(new JLabel("Nombre Cliente:"), gbc);
 
@@ -106,7 +102,6 @@ public class FrmCanjePuntos extends JFrame {
         gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         panelCentral.add(txtNombreCliente, gbc);
 
-        // Puntos
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 1; gbc.weightx = 0.0;
         panelCentral.add(new JLabel("Puntos Disponibles:"), gbc);
 
@@ -116,7 +111,6 @@ public class FrmCanjePuntos extends JFrame {
         gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         panelCentral.add(txtPuntosCliente, gbc);
 
-        // Selección de Premio
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 1; gbc.weightx = 0.0;
         panelCentral.add(new JLabel("Seleccionar Premio:"), gbc);
 
@@ -130,7 +124,6 @@ public class FrmCanjePuntos extends JFrame {
         gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1.0;
         panelCentral.add(cbPremios, gbc);
 
-        // Botón Canjear
         btnCanjear = crearBoton("PROCESAR CANJE Y GENERAR CUPÓN", new Color(34, 153, 84), Color.WHITE);
         btnCanjear.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnCanjear.setPreferredSize(new Dimension(0, 38));
@@ -138,7 +131,6 @@ public class FrmCanjePuntos extends JFrame {
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3; gbc.insets = new Insets(15, 10, 10, 10);
         panelCentral.add(btnCanjear, gbc);
 
-        // Cupón Generado
         lblCodigoCuponGenerado = new JLabel("CUPÓN: NINGUNO GENERADO", SwingConstants.CENTER);
         lblCodigoCuponGenerado.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblCodigoCuponGenerado.setForeground(new Color(142, 68, 173));
@@ -206,7 +198,6 @@ public class FrmCanjePuntos extends JFrame {
             return;
         }
 
-        // DESCUENTO REAL Y DIRECTO EN ORACLE XE
         boolean exitoBD = gestionClientes.descontarPuntos(clienteSeleccionado.getNit(), costoPuntos);
 
         if (exitoBD) {

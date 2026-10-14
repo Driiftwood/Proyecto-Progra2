@@ -6,7 +6,7 @@ package proyecto.progra2;
 
 /**
  *
- * @author fmejia
+ * @author fmejia, gerver morales, natalia galicia, endermiso, jose
  */
 public class ProyectoProgra2 {
 

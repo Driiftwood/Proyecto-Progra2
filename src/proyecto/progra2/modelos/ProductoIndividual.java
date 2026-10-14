@@ -1,7 +1,7 @@
 package proyecto.progra2.modelos;
 
 public class ProductoIndividual extends ItemVenta {
-    private String categoria; // "SANDWICH", "BEBIDA", "ACOMPANAMIENTO"
+    private String categoria;
     private int existencia;
     private boolean activo;
 
@@ -24,8 +24,8 @@ public class ProductoIndividual extends ItemVenta {
     @Override
     public int calcularPuntos(int cantidad) {
         if ("SANDWICH".equalsIgnoreCase(categoria)) {
-            return cantidad * 2; // Sándwich individual = 2 puntos por unidad
+            return cantidad * 2;
         }
-        return 0; // Bebidas y Acompañamientos = 0 puntos
+        return 0;
     }
 }

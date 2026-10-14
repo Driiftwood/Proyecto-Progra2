@@ -47,7 +47,6 @@ public class FrmInventario extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(10, 10));
 
-        // --- Header ---
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -77,7 +76,6 @@ public class FrmInventario extends JFrame {
 
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- Panel Izquierdo ---
         JPanel panelIzquierdo = new JPanel(new BorderLayout(0, 10));
         panelIzquierdo.setOpaque(false);
         panelIzquierdo.setBorder(new EmptyBorder(10, 15, 10, 10));
@@ -148,7 +146,6 @@ public class FrmInventario extends JFrame {
 
         add(panelIzquierdo, BorderLayout.WEST);
 
-        // --- Panel Derecho: Tabla ---
         JPanel panelTabla = new JPanel(new BorderLayout(5, 5));
         panelTabla.setOpaque(false);
         panelTabla.setBorder(new EmptyBorder(10, 5, 10, 15));
@@ -259,7 +256,6 @@ public class FrmInventario extends JFrame {
             return;
         }
 
-        // Si la sesión activa es de un Cajero, exige clave de Administrador
         if (usuarioSesion != null && "Cajero".equalsIgnoreCase(usuarioSesion.getRol())) {
             if (!DialogAutorizacion.solicitarAutorizacion(this)) return;
         }
@@ -290,7 +286,6 @@ public class FrmInventario extends JFrame {
             return;
         }
 
-        // Si la sesión activa es de un Cajero, exige clave de Administrador
         if (usuarioSesion != null && "Cajero".equalsIgnoreCase(usuarioSesion.getRol())) {
             if (!DialogAutorizacion.solicitarAutorizacion(this)) return;
         }
