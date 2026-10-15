@@ -11,7 +11,7 @@ import proyecto.progra2.modelos.Pedido;
 
 public class FrmPedidos extends JFrame {
 
-    // Componentes de la interfaz
+    
     private JTextField txtIdCliente;
     private JTextField txtIdProducto;
     private JTextField txtNombreProducto;
@@ -24,18 +24,18 @@ public class FrmPedidos extends JFrame {
     private DefaultTableModel modeloTabla;
     private JLabel lblTotal;
 
-    // Objeto principal de la lógica
+    
     private Pedido pedidoActual;
 
-    // Paleta de Colores Corporativa
-    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      // Azul Marino
-    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  // Gris Claro
-    private static final Color COLOR_TEXT_DARK = new Color(33, 37, 41);   // Texto Oscuro
+    
+    private static final Color COLOR_PRIMARY = new Color(24, 43, 73);      
+    private static final Color COLOR_BG_LIGHT = new Color(245, 247, 250);  
+    private static final Color COLOR_TEXT_DARK = new Color(33, 37, 41);   
 
-    // Colores de Botones con Alto Contraste
-    private static final Color BTN_AGREGAR_BG = new Color(34, 139, 34);    // Verde Bosque Sólido
-    private static final Color BTN_ELIMINAR_BG = new Color(178, 34, 34);   // Rojo Fuego Sólido
-    private static final Color BTN_PROCESAR_BG = new Color(24, 43, 73);    // Azul Marino Sólido
+    
+    private static final Color BTN_AGREGAR_BG = new Color(34, 139, 34);    
+    private static final Color BTN_ELIMINAR_BG = new Color(178, 34, 34);
+    private static final Color BTN_PROCESAR_BG = new Color(24, 43, 73);   
 
     public FrmPedidos() {
         pedidoActual = new Pedido(1001, 1);
@@ -51,7 +51,7 @@ public class FrmPedidos extends JFrame {
         getContentPane().setBackground(COLOR_BG_LIGHT);
         setLayout(new BorderLayout(15, 15));
 
-        // --- 1. HEADER BANNER ---
+        
         JPanel panelHeader = new JPanel(new BorderLayout());
         panelHeader.setBackground(COLOR_PRIMARY);
         panelHeader.setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -72,7 +72,7 @@ public class FrmPedidos extends JFrame {
         panelHeader.add(panelTextoHeader, BorderLayout.WEST);
         add(panelHeader, BorderLayout.NORTH);
 
-        // --- 2. CONTENIDO PRINCIPAL ---
+        
         JPanel panelCentro = new JPanel(new BorderLayout(10, 15));
         panelCentro.setOpaque(false);
         panelCentro.setBorder(new EmptyBorder(0, 15, 0, 15));
@@ -91,7 +91,7 @@ public class FrmPedidos extends JFrame {
         Font fontLabel = new Font("Segoe UI", Font.BOLD, 12);
         Font fontText = new Font("Segoe UI", Font.PLAIN, 13);
 
-        // Fila 0: ID Cliente y ID Producto
+        
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.1;
         panelFormulario.add(crearLabel("ID Cliente:", fontLabel), gbc);
 
@@ -106,7 +106,7 @@ public class FrmPedidos extends JFrame {
         txtIdProducto = crearTextField("", fontText);
         panelFormulario.add(txtIdProducto, gbc);
 
-        // Fila 1: Nombre Producto
+        
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.1;
         panelFormulario.add(crearLabel("Producto:", fontLabel), gbc);
 
@@ -114,7 +114,7 @@ public class FrmPedidos extends JFrame {
         txtNombreProducto = crearTextField("", fontText);
         panelFormulario.add(txtNombreProducto, gbc);
 
-        // Fila 2: Cantidad y Precio
+        
         gbc.gridwidth = 1;
         gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0.1;
         panelFormulario.add(crearLabel("Cantidad:", fontLabel), gbc);
@@ -130,7 +130,7 @@ public class FrmPedidos extends JFrame {
         txtPrecio = crearTextField("", fontText);
         panelFormulario.add(txtPrecio, gbc);
 
-        // Fila 3: Botones de Acción sobre formulario
+        
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 4;
         JPanel panelBotonesForm = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         panelBotonesForm.setOpaque(false);
@@ -147,7 +147,7 @@ public class FrmPedidos extends JFrame {
 
         panelCentro.add(panelFormulario, BorderLayout.NORTH);
 
-        // Tabla de Detalles
+        
         String[] columnas = {"ID Prod.", "Descripción del Producto", "Cantidad", "Precio Unitario", "Subtotal"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
             @Override
@@ -175,7 +175,7 @@ public class FrmPedidos extends JFrame {
         panelCentro.add(scrollTabla, BorderLayout.CENTER);
         add(panelCentro, BorderLayout.CENTER);
 
-        // --- 3. PANEL INFERIOR ---
+        
         JPanel panelInferior = new JPanel(new BorderLayout());
         panelInferior.setBackground(Color.WHITE);
         panelInferior.setBorder(BorderFactory.createCompoundBorder(
@@ -206,7 +206,7 @@ public class FrmPedidos extends JFrame {
 
         add(panelInferior, BorderLayout.SOUTH);
 
-        // Eventos
+        
         btnAgregar.addActionListener(e -> agregarProducto());
         btnEliminar.addActionListener(e -> eliminarProductoSeleccionado());
         btnProcesar.addActionListener(e -> procesarPedido());
@@ -229,7 +229,7 @@ public class FrmPedidos extends JFrame {
         return textField;
     }
 
-    // Método para forzar relleno de color sólido y letras blancas perfectamente legibles
+    
     private void estilarBotonSolido(JButton btn, Color bgColor) {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btn.setBackground(bgColor);
